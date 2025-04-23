@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router";
 import AppLayout from "./AppLayout";
 
 import TrxInput from "./pages/trx/TrxInput";
+import TrxList from "./pages/trx/TrxList";
 
 import SetProduk from "./pages/set/SetProduk";
 import SetSupplier from "./pages/set/SetSupplier";
@@ -15,6 +16,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<AppLayout />}>
           <Route path="/trxinput" element={<TrxInput />} />
+          <Route path="/trxlist" element={<TrxList />} />
 
           <Route path="/setproduk" element={<SetProduk />} />
           <Route index path="/setsupplier" element={<SetSupplier />} />

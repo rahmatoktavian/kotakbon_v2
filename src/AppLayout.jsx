@@ -92,7 +92,7 @@ const AppLayout = () => {
         <Title level={3} style={{marginTop:5, marginLeft:-20}}>KotakBon</Title>
       </Header>
       <Layout>
-        <Sider theme="light" collapsible>
+        <Sider theme="light" collapsible={true} defaultCollapsed={true}>
           <Menu mode="inline" items={menuItems} onClick={onClick} selectedKeys={[current]} />
         </Sider>
         <Content style={{backgroundColor:'#fff',marginLeft:3, padding:10 }}><Outlet /></Content>

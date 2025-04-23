@@ -8,6 +8,7 @@ const SetSupplier = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [isLoading, setIsLoading] = useState(false);
 
+  const [searchFilter, setSearchFilter] = useState('');
   const [dataList, setDataList] = useState([]);
   const [id, setID] = useState(0);
   const [modalShow, setModalShow] = useState(false);
@@ -17,13 +18,13 @@ const SetSupplier = () => {
 
   useEffect(() => {
     getDataList();
-  }, []);
+  }, [searchFilter]);
 
-  async function getDataList(search='') {
+  async function getDataList() {
     setIsLoading(true)
     const { data } = await supabase.from("supplier")
                       .select('id,nama')
-                      .ilike('nama', '%'+search+'%')
+                      .ilike('nama', '%'+searchFilter+'%')
                       .order('nama', { ascending:true })
    
     setDataList(data)
@@ -144,7 +145,7 @@ const SetSupplier = () => {
 
       <Space>
         <Button onClick={() => showDetail(0)} icon={<PlusOutlined />} type="primary">Tambah</Button>
-        <Search placeholder="Cari nama" allowClear onSearch={(text) => getDataList(text)} />  
+        <Search placeholder="Cari produk" allowClear onChange={(e) => setSearchFilter(e.target.value)} />
       </Space>
       
       <Table 

@@ -8,6 +8,8 @@ const SetProduk = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [isLoading, setIsLoading] = useState(false);
 
+  const [searchFilter, setSearchFilter] = useState('');
+  const [kategoriFilter, setKategoriFilter] = useState('');
   const [dataList, setDataList] = useState([]);
   const [dataKategori, setDataKategori] = useState([]);
   const [dataSupplier, setDataSupplier] = useState([]);
@@ -18,16 +20,37 @@ const SetProduk = () => {
   const { Search } = Input;
 
   useEffect(() => {
+    getKategoriList();
     getDataList();
-  }, []);
+  }, [searchFilter,kategoriFilter]);
 
-  async function getDataList(search='') {
+  async function getKategoriList() {
+      setIsLoading(true)
+      const { data } = await supabase.from("kategori")
+                        .select('id,nama')
+                        .order('nama', { ascending:true })
+      
+      const listKategori = []
+      listKategori.push({ value:'', label:'Semua Kategori'})
+      data.map((val) => (
+        listKategori.push({ value:val.id, label:val.nama})
+      ))
+      setDataKategori(listKategori)
+      setIsLoading(false)
+  }
+
+  async function getDataList() {
     setIsLoading(true)
-    const { data } = await supabase.from("produk")
+    let query = supabase.from("produk")
                       .select('id,nama,harga,stok,kategori(nama)')
-                      .ilike('nama', '%'+search+'%')
+                      .ilike('nama', '%'+searchFilter+'%')
+                      .order('kategori(nama)', { ascending:true })
                       .order('nama', { ascending:true })
 
+    if (kategoriFilter != '')
+      query = query.eq('kategori_id', kategoriFilter)
+
+    const { data } = await query;
     setDataList(data)
     setIsLoading(false)
   }
@@ -38,17 +61,6 @@ const SetProduk = () => {
 
     form.resetFields()
     setID(id)
-
-    //kategori
-    const { data:kategori } = await supabase.from("kategori")
-                      .select('id,nama')
-                      .order('nama', { ascending:true })
-                      
-    const listKategori = []
-    kategori.map((val) => (
-      listKategori.push({ value:val.id, label:val.nama})
-    ))
-    setDataKategori(listKategori)
 
     //supplier
     const { data:supplier } = await supabase.from("supplier")
@@ -162,16 +174,16 @@ const SetProduk = () => {
 
   const columns = [
     {
-      title: 'Nama',
-      dataIndex: 'nama',
-      key: 'nama',
-    },
-    {
       title: 'Kategori',
       key: 'kategori.nama',
       render: (_, record) => (
         <>{record.kategori.nama}</>
       ),
+    },
+    {
+      title: 'Nama',
+      dataIndex: 'nama',
+      key: 'nama',
     },
     {
       title: 'Harga',
@@ -202,7 +214,15 @@ const SetProduk = () => {
 
       <Space>
         <Button onClick={() => showDetail(0)} icon={<PlusOutlined />} type="primary">Tambah</Button>
-        <Search placeholder="Cari nama" allowClear onSearch={(text) => getDataList(text)} />  
+        <Select
+          showSearch
+          optionFilterProp="label"
+          value={kategoriFilter}
+          onChange={(value) => setKategoriFilter(value)}
+          options={dataKategori} 
+          style={{ width:200 }}
+        />
+        <Search placeholder="Cari nama" allowClear onChange={(e) => setSearchFilter(e.target.value)} />
       </Space>
       
       <Table 
