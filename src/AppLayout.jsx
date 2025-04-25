@@ -27,29 +27,29 @@ const menuItems = [
       },
     ]
   },
-  // {
-  //   label: 'Laporan',
-  //   key: 'laporan',
-  //   icon: <FileDoneOutlined />,
-  //   children: [
-  //     {
-  //       key: 'lap_penjualan',
-  //       label: 'Penjualan & Laba',
-  //     },
-  //     {
-  //       key: 'lap_stok',
-  //       label: 'Stok Produk',
-  //     },
-  //   ],
-  // },
+  {
+    label: 'Laporan',
+    key: 'laporan',
+    icon: <FileDoneOutlined />,
+    children: [
+      {
+        key: 'lappenjualanharian',
+        label: 'Rekap Penjualan Harian',
+      },
+      {
+        key: 'lapstokharian',
+        label: 'Rekap Stok Harian',
+      },
+    ],
+  },
   {
     label: 'Setting',
     key: 'setting',
     icon: <SettingOutlined />,
     children: [
       {
-        key: 'setstok',
-        label: 'Stok',
+        key: 'setstokproduk',
+        label: 'Stok Produk',
       },
       {
         key: 'setproduk',

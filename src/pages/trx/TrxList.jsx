@@ -79,7 +79,6 @@ const TrxList = () => {
   }, [searchFilter, dateFilter, metodeBayarFilter]);
 
   async function getDataList() {
-    console.log(metodeBayarFilter)
     setIsLoading(true)
     let query = supabase.from("penjualan")
                       .select('id,kode,tanggal,total_harga,list_produk,nominal_bayar,metode_bayar,keterangan')
@@ -121,6 +120,7 @@ const TrxList = () => {
     {
       title: 'Total Pesanan',
       dataIndex: 'total_harga',
+      align: 'right',
       render: (_, record) => (
         <>{record.total_harga.toLocaleString()}</>
       ),
@@ -128,6 +128,7 @@ const TrxList = () => {
     {
       title: 'Pembayaran',
       key: 'nominal_bayar',
+      align: 'right',
       render: (_, record) => (
         <>{record.nominal_bayar.toLocaleString()}</>
       ),
@@ -135,6 +136,7 @@ const TrxList = () => {
     {
       title: 'Kembalian',
       key: 'kembalian',
+      align: 'right',
       render: (_, record) => (
         <>{(record.nominal_bayar - record.total_harga).toLocaleString()}</>
       ),
@@ -188,7 +190,6 @@ const TrxList = () => {
         style={{marginTop:10}} 
         loading={isLoading}
         pagination={false} 
-        // scroll={{ y: 200 }}
         summary={dataList => {
           let totalHarga = 0;
           let totalBayar = 0;
@@ -201,17 +202,16 @@ const TrxList = () => {
           return (
             <>
               <Table.Summary.Row>
-                <Table.Summary.Cell index={0}></Table.Summary.Cell>
-                <Table.Summary.Cell index={1}>
+                <Table.Summary.Cell index={0}>
                   <span style={{fontWeight:'bold'}}>Total</span>
                 </Table.Summary.Cell>
-                <Table.Summary.Cell index={2}>
+                <Table.Summary.Cell index={1} align='right'>
                   <span style={{fontWeight:'bold'}}>{totalHarga.toLocaleString()}</span>
                 </Table.Summary.Cell>
-                <Table.Summary.Cell index={3}>
+                <Table.Summary.Cell index={2} align='right'>
                   <span style={{fontWeight:'bold'}}>{totalBayar.toLocaleString()}</span>
                 </Table.Summary.Cell>
-                <Table.Summary.Cell index={4}>
+                <Table.Summary.Cell index={3} align='right'>
                   <span style={{fontWeight:'bold'}}>{totalKembalian.toLocaleString()}</span>
                 </Table.Summary.Cell>
               </Table.Summary.Row>

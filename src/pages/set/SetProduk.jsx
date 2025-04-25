@@ -10,6 +10,7 @@ const SetProduk = () => {
 
   const [searchFilter, setSearchFilter] = useState('');
   const [kategoriFilter, setKategoriFilter] = useState('');
+  const [supplierFilter, setSupplierFilter] = useState('');
   const [dataRange, setDataRange] = useState({ start:0, end:9 });
   const [dataTotal, setDataTotal] = useState(0);
 
@@ -24,8 +25,39 @@ const SetProduk = () => {
 
   useEffect(() => {
     getKategoriList();
+    getSupplierList();
     getDataList();
-  }, [searchFilter, kategoriFilter, dataRange.start]);
+  }, [searchFilter, kategoriFilter, supplierFilter, dataRange.start]);
+
+  async function getDataList() {
+    setIsLoading(true)
+    let query = supabase.from("produk")
+                      .select('id,nama,harga,hpp,kategori(nama),supplier(nama)', { count:'exact' })
+                      .ilike('nama', '%'+searchFilter+'%')
+                      .order('nama', { ascending:true })
+                      .range(dataRange.start, dataRange.end)
+    
+    if (kategoriFilter != '')
+      query = query.eq('kategori_id', kategoriFilter)
+    
+    if (supplierFilter != '')
+      query = query.eq('supplier_id', supplierFilter)
+
+    const { data, count } = await query;
+    
+    setDataList(data)
+    setDataTotal(count);
+    setIsLoading(false)
+  }
+
+  const onTableChange = (newPagination) => {
+    let startRange = (newPagination.current - 1) * newPagination.pageSize;
+    let endRange = newPagination.current * newPagination.pageSize - 1;
+    setDataRange({
+      start: startRange,
+      end: endRange,
+    });
+  };
 
   async function getKategoriList() {
       setIsLoading(true)
@@ -42,31 +74,20 @@ const SetProduk = () => {
       setIsLoading(false)
   }
 
-  async function getDataList() {
+  async function getSupplierList() {
     setIsLoading(true)
-    let query = supabase.from("produk")
-                      .select('id,nama,harga,stok,kategori(nama)', { count:'exact' })
-                      .ilike('nama', '%'+searchFilter+'%')
+    const { data } = await supabase.from("supplier")
+                      .select('id,nama')
                       .order('nama', { ascending:true })
-                      .range(dataRange.start, dataRange.end)
-
-    if (kategoriFilter != '')
-      query = query.eq('kategori_id', kategoriFilter)
-
-    const { data, count } = await query;
-    setDataList(data)
-    setDataTotal(count);
+    
+    const listSupplier = []
+    listSupplier.push({ value:'', label:'Semua Supplier'})
+    data.map((val) => (
+      listSupplier.push({ value:val.id, label:val.nama})
+    ))
+    setDataSupplier(listSupplier)
     setIsLoading(false)
   }
-
-  const onTableChange = (newPagination) => {
-    let startRange = (newPagination.current - 1) * newPagination.pageSize;
-    let endRange = newPagination.current * newPagination.pageSize - 1;
-    setDataRange({
-      start: startRange,
-      end: endRange,
-    });
-  };
 
   async function showDetail(id) {
     setIsLoading(true)
@@ -193,22 +214,33 @@ const SetProduk = () => {
     },
     {
       title: 'Kategori',
-      key: 'kategori.nama',
+      key: 'kategori_nama',
       render: (_, record) => (
         <>{record.kategori.nama}</>
       ),
     },
     {
-      title: 'Harga',
+      title: 'Supplier',
+      key: 'supplier_nama',
+      render: (_, record) => (
+        <>{record.supplier.nama}</>
+      ),
+    },
+    {
+      title: 'Harga Jual',
       key: 'harga',
+      align: 'right',
       render: (_, record) => (
         <>{record.harga.toLocaleString()}</>
       ),
     },
     {
-      title: 'Stok',
-      dataIndex: 'stok',
-      key: 'stok',
+      title: 'Harga Modal',
+      key: 'hpp',
+      align: 'right',
+      render: (_, record) => (
+        <>{record.hpp.toLocaleString()}</>
+      ),
     },
     {
       title: 'Action',
@@ -236,6 +268,14 @@ const SetProduk = () => {
           options={dataKategori} 
           style={{ width:200 }}
         />
+        <Select
+          showSearch
+          optionFilterProp="label"
+          value={supplierFilter}
+          onChange={(value) => setSupplierFilter(value)}
+          options={dataSupplier} 
+          style={{ width:200 }}
+        />
       </Space>
       
       <Table 
@@ -249,7 +289,7 @@ const SetProduk = () => {
           total: dataTotal,
           hideOnSinglePage: true,
         }}
-        scroll={{ x: 500 }}
+        // scroll={{ x: 500 }}
       />
 
       <Modal 
@@ -286,6 +326,19 @@ const SetProduk = () => {
             />
           </Form.Item>
           <Form.Item
+            label="Supplier"
+            name="supplier"
+            rules={[{ required: true }]}
+          >
+            <Select
+              showSearch
+              optionFilterProp="label"
+              placeholder="Tanpa Supplier"
+              onChange={(value) => form.setFieldsValue({ supplier:value })}
+              options={dataSupplier} 
+            />
+          </Form.Item>
+          <Form.Item
             label="Harga Jual"
             name="harga"
             rules={[{ required: true }]}
@@ -298,18 +351,6 @@ const SetProduk = () => {
             rules={[{ required: true }]}
           >
             <InputNumber />
-          </Form.Item>
-          <Form.Item
-            label="Supplier"
-            name="supplier"
-          >
-            <Select
-              showSearch
-              optionFilterProp="label"
-              placeholder="Tanpa Supplier"
-              onChange={(value) => form.setFieldsValue({ supplier:value })}
-              options={dataSupplier} 
-            />
           </Form.Item>
           <Form.Item>
             <Space>

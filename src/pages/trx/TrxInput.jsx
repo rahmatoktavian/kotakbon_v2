@@ -103,23 +103,35 @@ const TrxInput = () => {
     setIsLoading(true)
 
     let query = supabase.from("produk")
-                    .select('id,kategori_id,nama,harga,hpp,stok', { count:'exact' })
+                    .select('id,kategori_id,nama,harga,hpp,produk_stok(qty)', { count:'exact' })
+                    .eq('produk_stok.tanggal', currDate)
                     .ilike('nama', '%'+searchFilter+'%')
                     .order('nama', { ascending:true })
                     .range(dataRange.start, dataRange.end)
-
+                    
     if (kategoriFilter != '')
       query = query.eq('kategori_id', kategoriFilter)
 
     const { data, count } = await query;
-
+    
     const newData = []
     data && data.map((val) => {
+
       let disabledProduk = false
-      dataPesanan.length > 0 && dataPesanan.map((pesanan) => {
-        if(pesanan.id == val.id)
-          disabledProduk = true
-      })
+      let disabledLabel = 'Pilih'
+      if(val.produk_stok[0] && val.produk_stok[0].qty > 0) {
+
+        dataPesanan.length > 0 && dataPesanan.map((pesanan) => {
+          if(pesanan.id == val.id) {
+            disabledProduk = true
+            disabledLabel = 'Terpilih'
+          }
+        })
+        
+      } else {
+        disabledProduk = true
+        disabledLabel = 'Stok Kosong'
+      }
 
       newData.push({ 
         id:val.id, 
@@ -127,8 +139,8 @@ const TrxInput = () => {
         nama:val.nama,
         harga:val.harga,
         hpp:val.hpp,
-        stok:val.stok,
-        disabled:disabledProduk
+        disabled:disabledProduk,
+        disabledLabel: disabledLabel,
       })
     })
 
@@ -158,6 +170,7 @@ const TrxInput = () => {
       //insert new
       produk.qty = 1
       produk.disabled = true
+      produk.disabledLabel = 'Terpilih'
       let newDataPesanan = [...dataPesanan, produk];
       setDataPesanan(dataPesanan => newDataPesanan );
 
@@ -179,6 +192,7 @@ const TrxInput = () => {
         if(tipe == 'minus' && val.qty == 1) {
           doDelete = true
           newDataPesanan[idx].disabled = false
+          newDataPesanan[idx].disabledLabel = ''
         }
 
         newDataPesanan[idx].qty = tipe == 'plus' ? val.qty+1  : val.qty-1;
@@ -207,19 +221,20 @@ const TrxInput = () => {
     let total_produk = 0;
     let total_hpp = 0;
     let list_produk_label = '';
-    let list_produk_newstok = []
+    // let list_produk_newstok = []
     dataPesanan.map((val, idx) => {
       total_produk = total_produk + val.qty
       total_hpp = total_hpp + (val.qty * val.hpp)
       list_produk_label = idx > 0 ? list_produk_label + ','+val.nama : list_produk_label + val.nama
 
-      list_produk_newstok.push({ 
-        id:val.id, 
-        nama:val.nama,
-        kategori_id:val.kategori_id,
-        harga:val.harga,
-        hpp:val.hpp,
-        stok:(val.stok-val.qty) })
+      // list_produk_newstok.push({ 
+      //   id:val.id, 
+      //   nama:val.nama,
+      //   kategori_id:val.kategori_id,
+      //   harga:val.harga,
+      //   hpp:val.hpp,
+      //   stok:(val.stok-val.qty) 
+      // })
     })
     list_produk_label = list_produk_label.substring(0, 50)
 
@@ -262,9 +277,9 @@ const TrxInput = () => {
       .insert(list_produk)
 
     //update produk stok
-    const { error:error_produk } =  await supabase
-      .from('produk')
-      .upsert(list_produk_newstok)
+    // const { error:error_produk } =  await supabase
+    //   .from('produk')
+    //   .upsert(list_produk_newstok)
 
     setIsLoading(false)
     setModalShow(true)
@@ -333,10 +348,10 @@ const TrxInput = () => {
               renderItem={(item, index) => (
                 <List.Item
                   key={index}
-                  onClick={() => onPesanInsert(item)}
+                  onClick={item.disabled ? undefined : () => onPesanInsert(item)}
                   actions={[
-                    <Button type="primary" icon={item.disabled ? <CheckOutlined /> : <PlusOutlined />} onClick={() => onPesanInsert(item)} style={{marginTop:10}} disabled={item.disabled}>
-                      {item.disabled ? 'Terpilih' : 'Pilih'}
+                    <Button type="primary" onClick={item.disabled ? undefined : () => onPesanInsert(item)} style={{marginTop:10}} disabled={item.disabled}>
+                      {item.disabledLabel}
                     </Button>
                   ]}
                 >
@@ -398,7 +413,6 @@ const TrxInput = () => {
                     value={dataPesananPayment}
                     onChange={(value) => onChangeNominalBayar(value)}
                     style={{ width:150 }}
-                    autoFocus
                   />
                 </List.Item>
                 <List.Item>
