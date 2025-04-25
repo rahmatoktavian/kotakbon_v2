@@ -27,21 +27,21 @@ const menuItems = [
       },
     ]
   },
-  {
-    label: 'Laporan',
-    key: 'laporan',
-    icon: <FileDoneOutlined />,
-    children: [
-      {
-        key: 'lap_penjualan',
-        label: 'Penjualan & Laba',
-      },
-      {
-        key: 'lap_stok',
-        label: 'Stok Produk',
-      },
-    ],
-  },
+  // {
+  //   label: 'Laporan',
+  //   key: 'laporan',
+  //   icon: <FileDoneOutlined />,
+  //   children: [
+  //     {
+  //       key: 'lap_penjualan',
+  //       label: 'Penjualan & Laba',
+  //     },
+  //     {
+  //       key: 'lap_stok',
+  //       label: 'Stok Produk',
+  //     },
+  //   ],
+  // },
   {
     label: 'Setting',
     key: 'setting',
@@ -89,7 +89,7 @@ const AppLayout = () => {
   return (
     <Layout style={layoutStyle}>
       <Header style={{backgroundColor:'#fff',marginBottom:5,height:50 }}>
-        <Title level={3} style={{marginTop:5, marginLeft:-20}}>KotakBon</Title>
+        <Title level={3} style={{marginTop:5, marginLeft:-20}}>kotakbon</Title>
       </Header>
       <Layout>
         <Sider theme="light" collapsible={true} defaultCollapsed={true}>

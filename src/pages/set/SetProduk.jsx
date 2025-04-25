@@ -10,6 +10,9 @@ const SetProduk = () => {
 
   const [searchFilter, setSearchFilter] = useState('');
   const [kategoriFilter, setKategoriFilter] = useState('');
+  const [dataRange, setDataRange] = useState({ start:0, end:9 });
+  const [dataTotal, setDataTotal] = useState(0);
+
   const [dataList, setDataList] = useState([]);
   const [dataKategori, setDataKategori] = useState([]);
   const [dataSupplier, setDataSupplier] = useState([]);
@@ -22,7 +25,7 @@ const SetProduk = () => {
   useEffect(() => {
     getKategoriList();
     getDataList();
-  }, [searchFilter,kategoriFilter]);
+  }, [searchFilter, kategoriFilter, dataRange.start]);
 
   async function getKategoriList() {
       setIsLoading(true)
@@ -42,18 +45,28 @@ const SetProduk = () => {
   async function getDataList() {
     setIsLoading(true)
     let query = supabase.from("produk")
-                      .select('id,nama,harga,stok,kategori(nama)')
+                      .select('id,nama,harga,stok,kategori(nama)', { count:'exact' })
                       .ilike('nama', '%'+searchFilter+'%')
-                      .order('kategori(nama)', { ascending:true })
                       .order('nama', { ascending:true })
+                      .range(dataRange.start, dataRange.end)
 
     if (kategoriFilter != '')
       query = query.eq('kategori_id', kategoriFilter)
 
-    const { data } = await query;
+    const { data, count } = await query;
     setDataList(data)
+    setDataTotal(count);
     setIsLoading(false)
   }
+
+  const onTableChange = (newPagination) => {
+    let startRange = (newPagination.current - 1) * newPagination.pageSize;
+    let endRange = newPagination.current * newPagination.pageSize - 1;
+    setDataRange({
+      start: startRange,
+      end: endRange,
+    });
+  };
 
   async function showDetail(id) {
     setIsLoading(true)
@@ -174,16 +187,16 @@ const SetProduk = () => {
 
   const columns = [
     {
+      title: 'Nama',
+      dataIndex: 'nama',
+      key: 'nama',
+    },
+    {
       title: 'Kategori',
       key: 'kategori.nama',
       render: (_, record) => (
         <>{record.kategori.nama}</>
       ),
-    },
-    {
-      title: 'Nama',
-      dataIndex: 'nama',
-      key: 'nama',
     },
     {
       title: 'Harga',
@@ -211,9 +224,10 @@ const SetProduk = () => {
       {contextHolder}
       <Title level={4} style={{marginTop:10, marginBottom:-10}}>Produk</Title>
       <Divider />
-
+    
       <Space>
         <Button onClick={() => showDetail(0)} icon={<PlusOutlined />} type="primary">Tambah</Button>
+        <Search placeholder="Cari nama" allowClear onChange={(e) => setSearchFilter(e.target.value)} />
         <Select
           showSearch
           optionFilterProp="label"
@@ -222,7 +236,6 @@ const SetProduk = () => {
           options={dataKategori} 
           style={{ width:200 }}
         />
-        <Search placeholder="Cari nama" allowClear onChange={(e) => setSearchFilter(e.target.value)} />
       </Space>
       
       <Table 
@@ -231,6 +244,12 @@ const SetProduk = () => {
         rowKey="id" 
         style={{marginTop:10}} 
         loading={isLoading}
+        onChange={onTableChange}
+        pagination={{
+          total: dataTotal,
+          hideOnSinglePage: true,
+        }}
+        scroll={{ x: 500 }}
       />
 
       <Modal 
