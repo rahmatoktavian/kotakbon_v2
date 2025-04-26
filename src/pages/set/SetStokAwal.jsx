@@ -37,7 +37,7 @@ const SetStokProduk = () => {
                       .select('id,tanggal,qty,produk(nama,harga)')
                       .eq('tanggal', dateFilter)
                       .ilike('produk.nama', '%'+searchFilter+'%')
-                      .order('id', { ascending:false })
+                      .order('produk(nama)', { ascending:true })
                       // .range(dataRange.start, dataRange.end)
     
     setDataList(data)
@@ -184,9 +184,19 @@ const SetStokProduk = () => {
       
     },
     {
+      title: 'Harga',
+      dataIndex: 'harga',
+      align: 'right',
+      render: (_, record) => (
+        <>{record.produk ? record.produk.harga.toLocaleString() : ''}</>
+      ),
+      
+    },
+    {
       title: 'Jumlah',
       key: 'qty',
       dataIndex: 'qty',
+      align: 'right',
     },
     {
       title: 'Action',
@@ -200,7 +210,7 @@ const SetStokProduk = () => {
   return (
     <>
       {contextHolder}
-      <Title level={4} style={{marginTop:10, marginBottom:-10}}>Stok Produk</Title>
+      <Title level={4} style={{marginTop:10, marginBottom:-10}}>Stok Awal</Title>
       <Divider />
     
       <Space>

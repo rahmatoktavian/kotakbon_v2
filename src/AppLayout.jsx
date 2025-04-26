@@ -48,8 +48,8 @@ const menuItems = [
     icon: <SettingOutlined />,
     children: [
       {
-        key: 'setstokproduk',
-        label: 'Stok Produk',
+        key: 'setstokawal',
+        label: 'Stok Awal',
       },
       {
         key: 'setproduk',

@@ -57,8 +57,6 @@ const TrxInput = () => {
   const [searchFilter, setSearchFilter] = useState('');
   const [kategoriFilter, setKategoriFilter] = useState('');
   const pageSize = 5;
-  const [dataRange, setDataRange] = useState({ start:0, end:(pageSize-1) });
-  const [dataTotal, setDataTotal] = useState(0);
 
   const [dataProduk, setDataProduk] = useState([]);
   const [dataKategori, setDataKategori] = useState([]);
@@ -81,45 +79,31 @@ const TrxInput = () => {
   const { Search } = Input;
 
   useEffect(() => {
-    getKategoriList();
     getProdukList();
-  }, [searchFilter, kategoriFilter, dataRange.start, dataPesananFinish]);
-
-  async function getKategoriList() {
-    const { data } = await supabase.from("kategori")
-                      .select('id,nama')
-                      .order('nama', { ascending:true })
-    
-    const listKategori = []
-    listKategori.push({ key:'', label:'Semua'})
-    data.map((val) => (
-      listKategori.push({ key:val.id, label:val.nama})
-    ))
-
-    setDataKategori(listKategori)
-  }
+    getKategoriList();
+  }, [searchFilter, kategoriFilter, dataPesananFinish]);
 
   async function getProdukList() {
     setIsLoading(true)
-
-    let query = supabase.from("produk")
-                    .select('id,kategori_id,nama,harga,hpp,produk_stok(qty)', { count:'exact' })
-                    .eq('produk_stok.tanggal', currDate)
-                    .ilike('nama', '%'+searchFilter+'%')
-                    .order('nama', { ascending:true })
-                    .range(dataRange.start, dataRange.end)
-                    
-    if (kategoriFilter != '')
-      query = query.eq('kategori_id', kategoriFilter)
-
-    const { data, count } = await query;
+    
+    let searchFilters = searchFilter != '' ? searchFilter : null;
+    let kategoriFilters = kategoriFilter != '' ? kategoriFilter : null;
+    const { data } = await supabase.rpc("lap_stok_harian", { 
+            date_filter:currDate,
+            nama_filter:searchFilters, 
+            kategori_filter:kategoriFilters, 
+            supplier_filter:null,
+        })
     
     const newData = []
     data && data.map((val) => {
+      let produkStokQty = val.produk_stok_qty ? val.produk_stok_qty : 0;
+      let produkPenjualanQty = val.produk_penjualan_qty ? val.produk_penjualan_qty : 0;
+      let produkStok = produkStokQty - produkPenjualanQty
 
       let disabledProduk = false
       let disabledLabel = 'Pilih'
-      if(val.produk_stok[0] && val.produk_stok[0].qty > 0) {
+      if(produkStok > 0) {
 
         dataPesanan.length > 0 && dataPesanan.map((pesanan) => {
           if(pesanan.id == val.id) {
@@ -139,14 +123,28 @@ const TrxInput = () => {
         nama:val.nama,
         harga:val.harga,
         hpp:val.hpp,
+        stok: produkStok,
         disabled:disabledProduk,
         disabledLabel: disabledLabel,
       })
     })
-
+    
     setDataProduk(newData)
-    setDataTotal(count)
     setIsLoading(false)
+  }
+
+  async function getKategoriList() {
+    const { data } = await supabase.from("kategori")
+                      .select('id,nama')
+                      .order('nama', { ascending:true })
+    
+    const listKategori = []
+    listKategori.push({ key:'', label:'Semua'})
+    data.map((val) => (
+      listKategori.push({ key:val.id, label:val.nama})
+    ))
+
+    setDataKategori(listKategori)
   }
 
   const onListChange = (newPagination) => {
@@ -192,10 +190,11 @@ const TrxInput = () => {
         if(tipe == 'minus' && val.qty == 1) {
           doDelete = true
           newDataPesanan[idx].disabled = false
-          newDataPesanan[idx].disabledLabel = ''
+          newDataPesanan[idx].disabledLabel = 'Pilih'
         }
 
-        newDataPesanan[idx].qty = tipe == 'plus' ? val.qty+1  : val.qty-1;
+        let newQty = tipe == 'plus' ? val.qty+1  : val.qty-1;
+        newDataPesanan[idx].qty = newQty > item.stok ? val.qty : newQty;
       }
     })
     setDataPesanan(newDataPesanan);
@@ -340,10 +339,8 @@ const TrxInput = () => {
               itemLayout="horizontal"
               dataSource={dataProduk}
               pagination={{
-                total: dataTotal,
                 pageSize: pageSize,
                 hideOnSinglePage: true,
-                onChange: (page) => onListChange(page)
               }}
               renderItem={(item, index) => (
                 <List.Item
@@ -377,7 +374,7 @@ const TrxInput = () => {
               <List.Item key={index}>
                 <List.Item.Meta
                   title={item.nama}
-                  description={'Rp '+item.harga.toLocaleString()}
+                  description={'Rp '+item.harga.toLocaleString()+' (Stok: '+item.stok+')'}
                 />
                 <Input
                   addonBefore={<Button icon={<MinusOutlined />} size="small" color="primary" variant="outlined" onClick={() => onPesanUpdate('minus', item, index)} />}

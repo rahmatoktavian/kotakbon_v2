@@ -35,9 +35,14 @@ const LapStokHarian = () => {
   async function getDataList() {
     setIsLoading(true)
 
+    let searchFilters = searchFilter != '' ? searchFilter : null;
     let supplierFilters = supplierFilter != '' ? supplierFilter : null;
-    const { data } = await supabase.rpc("lap_stok_harian", { date_filter:dateFilter, supplier_filter:supplierFilters })
-    
+    const { data } = await supabase.rpc("lap_stok_harian", { 
+        date_filter:dateFilter,
+        nama_filter:searchFilters, 
+        kategori_filter:null, 
+        supplier_filter:supplierFilters,
+    })
     const dataListResult = []
     data.map((val) => {
       if(val.produk_stok_qty > 0) {
@@ -134,8 +139,8 @@ const LapStokHarian = () => {
   const columns = [
     {
       title: 'Produk',
-      dataIndex: 'produk_nama',
-      key: 'produk_nama',
+      dataIndex: 'nama',
+      key: 'nama',
     },
     {
       title: 'Supplier',
@@ -185,7 +190,7 @@ const LapStokHarian = () => {
   return (
     <>
       {contextHolder}
-      <Title level={4} style={{marginTop:10, marginBottom:-10}}>Stok Produk</Title>
+      <Title level={4} style={{marginTop:10, marginBottom:-10}}>Rekap Stok Harian</Title>
       <Divider />
     
       <Space>
