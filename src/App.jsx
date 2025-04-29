@@ -80,7 +80,7 @@ const App = () => {
             <Form.Item
               label="Email"
               name="email"
-              rules={[{ required:true }]}
+              rules={[{ required:true, type: 'email' }]}
             >
               <Input />
             </Form.Item>
