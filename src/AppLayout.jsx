@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router';
-import { Layout, Menu, Typography } from 'antd';
-import { FormOutlined, FileDoneOutlined,SettingOutlined } from '@ant-design/icons';
+import { Layout, Row, Col, Menu, Typography, Button } from 'antd';
+import { FormOutlined, FileDoneOutlined, SettingOutlined, PoweroffOutlined } from '@ant-design/icons';
+import { supabase } from './config/supabase'
 
 const layoutStyle = {
   borderRadius: 8,
@@ -18,7 +19,7 @@ const menuItems = [
     icon: <FormOutlined />,
     children: [
       {
-        key: 'trxinput',
+        key: '/',
         label: 'Input',
       },
       {
@@ -85,11 +86,29 @@ const AppLayout = () => {
     const currentRoute = location.pathname.replace('/', '')
     setCurrent(currentRoute)
   }, []);
+
+  async function signOut() {
+    const { error } = await supabase.auth.signOut()
+  }
   
   return (
     <Layout style={layoutStyle}>
       <Header style={{backgroundColor:'#fff',marginBottom:5,height:50 }}>
-        <Title level={3} style={{marginTop:5, marginLeft:-20}}>kotakbon</Title>
+        <Row>
+          <Col span={22}>
+            <Title level={3} style={{marginTop:5, marginLeft:-20}}>kotakbon</Title>
+          </Col>
+          <Col span={2}>
+            <Button 
+              onClick={() => signOut()} 
+              icon={<PoweroffOutlined />} 
+              variant="outlined" 
+              color="primary" 
+              style={{ display:"flex", marginTop:5 }}>
+                Logout
+              </Button>
+          </Col>
+        </Row>
       </Header>
       <Layout>
         <Sider theme="light" collapsible={true} defaultCollapsed={true}>
