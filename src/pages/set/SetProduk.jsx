@@ -227,19 +227,19 @@ const SetProduk = () => {
       ),
     },
     {
-      title: 'Harga Jual',
-      key: 'harga',
-      align: 'right',
-      render: (_, record) => (
-        <>{record.harga.toLocaleString()}</>
-      ),
-    },
-    {
       title: 'Harga Modal',
       key: 'hpp',
       align: 'right',
       render: (_, record) => (
         <>{record.hpp.toLocaleString()}</>
+      ),
+    },
+    {
+      title: 'Harga Jual',
+      key: 'harga',
+      align: 'right',
+      render: (_, record) => (
+        <>{record.harga.toLocaleString()}</>
       ),
     },
     {
@@ -339,15 +339,15 @@ const SetProduk = () => {
             />
           </Form.Item>
           <Form.Item
-            label="Harga Jual"
-            name="harga"
+            label="Harga Modal"
+            name="hpp"
             rules={[{ required: true }]}
           >
             <InputNumber />
           </Form.Item>
           <Form.Item
-            label="Harga Modal"
-            name="hpp"
+            label="Harga Jual"
+            name="harga"
             rules={[{ required: true }]}
           >
             <InputNumber />
