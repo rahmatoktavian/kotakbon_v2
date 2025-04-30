@@ -88,11 +88,6 @@ const SetSupplier = () => {
       }
     }
 
-    messageApi.open({
-      type: 'success',
-      content: 'Berhasil simpan data',
-    });
-
     getDataList()
     setModalShow(false)
     setIsLoading(false)
