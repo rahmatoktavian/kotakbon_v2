@@ -161,7 +161,6 @@ const SetProduk = () => {
         nama:values.nama,
         harga:values.harga,
         hpp:values.hpp,
-        stok: 0,
        })
 
        if(error) {
