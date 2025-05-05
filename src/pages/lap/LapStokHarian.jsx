@@ -223,41 +223,41 @@ const LapStokHarian = () => {
           total: dataTotal,
           hideOnSinglePage: true,
         }}
-        summary={dataList => {
-          let totalStokAwal = 0;
-          let totalPenjualan = 0;
-          let totalStokAkhir = 0;
-          let totalModal = 0;
-          dataList.forEach(({ produk_stok_qty, produk_penjualan_qty, produk_penjualan_hpp }) => {
-            totalStokAwal += produk_stok_qty;
-            totalPenjualan += produk_penjualan_qty;
-            totalStokAkhir += (produk_stok_qty-produk_penjualan_qty);
-            totalModal += produk_penjualan_hpp;
-          });
-          return (
-            <>
-              <Table.Summary.Row>
-                <Table.Summary.Cell index={0}></Table.Summary.Cell>
-                <Table.Summary.Cell index={1}>
-                  <span style={{fontWeight:'bold'}}>Total</span>
-                </Table.Summary.Cell>
-                <Table.Summary.Cell index={2} align="right">
-                  <span style={{fontWeight:'bold'}}>{totalStokAwal.toLocaleString()}</span>
-                </Table.Summary.Cell>
-                <Table.Summary.Cell index={3} align="right">
-                  <span style={{fontWeight:'bold'}}>{totalPenjualan.toLocaleString()}</span>
-                </Table.Summary.Cell>
-                <Table.Summary.Cell index={4} align="right">
-                  <span style={{fontWeight:'bold'}}>{totalStokAkhir.toLocaleString()}</span>
-                </Table.Summary.Cell>
-                <Table.Summary.Cell index={4}></Table.Summary.Cell>
-                <Table.Summary.Cell index={5} align="right">
-                  <span style={{fontWeight:'bold'}}>{totalModal.toLocaleString()}</span>
-                </Table.Summary.Cell>
-              </Table.Summary.Row>
-            </>
-          );
-        }}
+        // summary={dataList => {
+        //   let totalStokAwal = 0;
+        //   let totalPenjualan = 0;
+        //   let totalStokAkhir = 0;
+        //   let totalModal = 0;
+        //   dataList.forEach(({ produk_stok_qty, produk_penjualan_qty, produk_penjualan_hpp }) => {
+        //     totalStokAwal += produk_stok_qty;
+        //     totalPenjualan += produk_penjualan_qty;
+        //     totalStokAkhir += (produk_stok_qty-produk_penjualan_qty);
+        //     totalModal += produk_penjualan_hpp;
+        //   });
+        //   return (
+        //     <>
+        //       <Table.Summary.Row>
+        //         <Table.Summary.Cell index={0}></Table.Summary.Cell>
+        //         <Table.Summary.Cell index={1}>
+        //           <span style={{fontWeight:'bold'}}>Total</span>
+        //         </Table.Summary.Cell>
+        //         <Table.Summary.Cell index={2} align="right">
+        //           <span style={{fontWeight:'bold'}}>{totalStokAwal.toLocaleString()}</span>
+        //         </Table.Summary.Cell>
+        //         <Table.Summary.Cell index={3} align="right">
+        //           <span style={{fontWeight:'bold'}}>{totalPenjualan.toLocaleString()}</span>
+        //         </Table.Summary.Cell>
+        //         <Table.Summary.Cell index={4} align="right">
+        //           <span style={{fontWeight:'bold'}}>{totalStokAkhir.toLocaleString()}</span>
+        //         </Table.Summary.Cell>
+        //         <Table.Summary.Cell index={4}></Table.Summary.Cell>
+        //         <Table.Summary.Cell index={5} align="right">
+        //           <span style={{fontWeight:'bold'}}>{totalModal.toLocaleString()}</span>
+        //         </Table.Summary.Cell>
+        //       </Table.Summary.Row>
+        //     </>
+        //   );
+        // }}
       />
 
       <Modal 

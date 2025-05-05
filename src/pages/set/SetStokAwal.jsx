@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Space, DatePicker, Typography, Divider, Table, Modal, Form, Button, Input, InputNumber, Select, Popconfirm, message } from 'antd';
-import { EditOutlined, PlusOutlined, CheckOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Space, DatePicker, Typography, Divider, Table, Modal, Form, Button, Input, InputNumber, Select, message } from 'antd';
+import { EditOutlined, CheckOutlined } from '@ant-design/icons';
 
 import { supabase } from '../../config/supabase';
 import dayjs from 'dayjs';
@@ -15,33 +15,54 @@ const SetStokProduk = () => {
 
   const [searchFilter, setSearchFilter] = useState('');
   const [dateFilter, setDateFilter] = useState(dayjs().format(dateFormat));
+  const [supplierFilter, setSupplierFilter] = useState('');
   const [dataRange, setDataRange] = useState({ start:0, end:9 });
   const [dataTotal, setDataTotal] = useState(0);
-
   const [dataList, setDataList] = useState([]);
-  const [dataProduk, setDataProduk] = useState([]);
+  const [dataSupplier, setDataSupplier] = useState([]);
 
-  const [id, setID] = useState(0);
+  const [produkID, setProdukID] = useState(0);
   const [modalShow, setModalShow] = useState(false);
   
-  const { Title } = Typography;
+  const { Title, Text } = Typography;
   const { Search } = Input;
 
   useEffect(() => {
     getDataList()
-  }, [dateFilter, searchFilter, dataRange.start]);
+    getSupplierList()
+  }, [dateFilter, searchFilter, supplierFilter, dataRange.start]);
 
   async function getDataList() {
     setIsLoading(true)
-    const { data, count } = await supabase.from("produk_stok")
-                      .select('id,tanggal,qty,produk(nama,harga)')
-                      .eq('tanggal', dateFilter)
-                      .ilike('produk.nama', '%'+searchFilter+'%')
-                      .order('produk(nama)', { ascending:true })
-                      // .range(dataRange.start, dataRange.end)
+    let query = supabase.from("produk")
+                    .select('id,nama,harga,supplier(nama),produk_stok(qty)', { count:'exact' })
+                    .eq('produk_stok.tanggal', dateFilter)
+                    .ilike('nama', '%'+searchFilter+'%')
+                    .order('nama', { ascending:true })
+                    .range(dataRange.start, dataRange.end)
+
+    if (supplierFilter != '')
+      query = query.eq('supplier_id', supplierFilter)
+
+    const { data, count } = await query;
     
     setDataList(data)
     setDataTotal(count);
+    setIsLoading(false)
+  }
+
+  async function getSupplierList() {
+    setIsLoading(true)
+    const { data } = await supabase.from("supplier")
+                      .select('id,nama')
+                      .order('nama', { ascending:true })
+    
+    const listSupplier = []
+    listSupplier.push({ value:'', label:'Semua Supplier'})
+    data.map((val) => (
+      listSupplier.push({ value:val.id, label:val.nama})
+    ))
+    setDataSupplier(listSupplier)
     setIsLoading(false)
   }
 
@@ -54,120 +75,59 @@ const SetStokProduk = () => {
     });
   };
 
-  async function showDetail(id) {
+  async function showDetail(produk) {
     setIsLoading(true)
     setModalShow(true)
 
     form.resetFields()
-    setID(id)
-
-    //produk
-    const { data:produk } = await supabase.from("produk")
-                      .select('id,nama,harga')
-                      .order('nama', { ascending:true })
-
-    const listProduk = []
-    produk.map((val) => (
-      listProduk.push({ value:val.id, label:val.nama+' [Rp '+val.harga.toLocaleString()+']'})
-    ))
-    setDataProduk(listProduk)
+    setProdukID(produk.id)
     
-    if(id != 0) {
-      const { data } = await supabase.from("produk_stok")
-                        .select('id,produk_id,qty')
-                        .eq('id',id)
-                        .single()
-                        
-      form.setFieldsValue({
-        produk:data.produk_id,
-        qty:data.qty,
-      });
-    }
+    const { data } = await supabase.from("produk_stok")
+                      .select('qty')
+                      .eq('tanggal', dateFilter)
+                      .eq('produk_id', produk.id)
+                      .single()
+
+    form.setFieldsValue({
+      tanggal: dateFilter,
+      produk: produk.nama,
+      qty:data ? data.qty : 0,
+    });
 
     setIsLoading(false)
   }
 
   async function onFinish(values) {
     setIsLoading(true)
-    if(id != 0) {
-      const { error } = await supabase
+    
+    const { data:check_stok } = await supabase
+                                .from('produk_stok')
+                                .select('id')
+                                .eq('tanggal', dateFilter)
+                                .eq('produk_id', produkID)
+                                .single()
+    if(check_stok) {
+      await supabase
       .from('produk_stok')
-      .update({ 
+      .update({
         qty:values.qty,
-       })
-      .eq('id',id)
-
-      if(error) {
-          messageApi.open({
-            type: 'error',
-            content: error.message,
-          });
-      } else {
-          messageApi.open({
-            type: 'success',
-            content: 'Berhasil simpan data',
-          });
-      }
+      })
+      .eq('id', check_stok.id)
 
     } else {
-      const { data:check_stok } = await supabase
-                                  .from('produk_stok')
-                                  .select('id')
-                                  .eq('tanggal', dateFilter)
-                                  .eq('produk_id', values.produk)
-                                  .single()
-      if(check_stok) {
-        messageApi.open({
-          type: 'error',
-          content: 'Stok produk sudah ada di tanggal sama',
-        });
-
-      } else {
-        const { error } = await supabase
-        .from('produk_stok')
-        .insert({ 
-          tanggal:dateFilter,
-          produk_id:values.produk,
-          qty:values.qty,
-        })
-
-        if(error) {
-            messageApi.open({
-              type: 'error',
-              content: error.message,
-            });
-        } else {
-            messageApi.open({
-              type: 'success',
-              content: 'Berhasil simpan data',
-            });
-        }
-      }
+      await supabase
+      .from('produk_stok')
+      .insert({ 
+        tanggal:dateFilter,
+        produk_id:produkID,
+        qty:values.qty,
+      })
     }
 
-    getDataList()
-    setModalShow(false)
-    setIsLoading(false)
-  }
-
-  async function onDelete() {
-    setIsLoading(true)
-    const { error } = await supabase
-              .from('produk_stok')
-              .delete()
-              .eq('id',id)
-        
-    if(error) {
-        messageApi.open({
-          type: 'error',
-          content: error.message,
-        });
-    } else {
-        messageApi.open({
-          type: 'success',
-          content: 'Berhasil hapus data',
-        });
-    }
+    messageApi.open({
+      type: 'success',
+      content: 'Berhasil simpan data',
+    });
 
     getDataList()
     setModalShow(false)
@@ -177,32 +137,37 @@ const SetStokProduk = () => {
   const columns = [
     {
       title: 'Produk',
-      dataIndex: 'produk',
+      dataIndex: 'nama',
+      key: 'nama',
+    },
+    {
+      title: 'Supplier',
+      key: 'supplier',
       render: (_, record) => (
-        <>{record.produk ? record.produk.nama : ''}</>
+        <>{record.supplier.nama}</>
       ),
-      
     },
     {
       title: 'Harga',
-      dataIndex: 'harga',
+      key: 'harga',
       align: 'right',
       render: (_, record) => (
-        <>{record.produk ? record.produk.harga.toLocaleString() : ''}</>
+        <>{record.harga.toLocaleString()}</>
       ),
-      
     },
     {
-      title: 'Jumlah',
-      key: 'qty',
-      dataIndex: 'qty',
+      title: 'Stok',
+      key: 'stok',
       align: 'right',
+      render: (_, record) => (
+        <>{record.produk_stok[0] ? record.produk_stok[0].qty : '-'}</>
+      ),
     },
     {
       title: 'Action',
       key: 'action',
       render: (_, record) => (
-        <Button onClick={() => showDetail(record.id)} icon={<EditOutlined />} type="primary">Ubah</Button>
+        <Button onClick={() => showDetail(record)} icon={<EditOutlined />} type="primary">Ubah</Button>
       ),
     },
   ];
@@ -210,18 +175,25 @@ const SetStokProduk = () => {
   return (
     <>
       {contextHolder}
-      <Title level={4} style={{marginTop:10, marginBottom:-10}}>Stok Awal</Title>
+      <Title level={4} style={{marginTop:10, marginBottom:-10}}>Stok Produk</Title>
       <Divider />
     
       <Space>
-        <Button onClick={() => showDetail(0)} icon={<PlusOutlined />} type="primary">Tambah</Button>
         <DatePicker 
           defaultValue={dayjs(dateFilter, dateFormat)} 
           format={dateFormat}  
           onChange={(date, dateString) => setDateFilter(dateString)} 
           allowClear={false}
         />
-        {/* <Search placeholder="Cari produk" allowClear onChange={(e) => setSearchFilter(e.target.value)} /> */}
+        <Search placeholder="Cari produk" allowClear onChange={(e) => setSearchFilter(e.target.value)} />
+        <Select
+                  showSearch
+                  optionFilterProp="label"
+                  value={supplierFilter}
+                  onChange={(value) => setSupplierFilter(value)}
+                  options={dataSupplier} 
+                  style={{ width:200 }}
+                />
       </Space>
       
       <Table 
@@ -232,9 +204,9 @@ const SetStokProduk = () => {
         loading={isLoading}
         onChange={onTableChange}
         pagination={{
-          pageSize:100
+          total: dataTotal,
+          hideOnSinglePage: true,
         }}
-        scroll={{ x: 500 }}
       />
 
       <Modal 
@@ -251,25 +223,25 @@ const SetStokProduk = () => {
           onFinish={onFinish}
         >
           <Form.Item
+            label="Tanggal Stok"
+            name="tanggal"
+            rules={[{ required: true }]}
+          >
+            <Input disabled={true} />
+          </Form.Item>
+          <Form.Item
             label="Produk"
             name="produk"
             rules={[{ required: true }]}
           >
-            <Select
-              showSearch
-              optionFilterProp="label"
-              placeholder="Pilih"
-              onChange={(value) => form.setFieldsValue({ produk:value })}
-              options={dataProduk} 
-              disabled={id != 0 ? true : false}
-            />
+            <Input disabled={true} />
           </Form.Item>
           <Form.Item
             label="Jumlah"
             name="qty"
-            rules={[{ required: true }]}
+            rules={[{ required: true, type: 'number', min:0 }]}
           >
-            <InputNumber min={1} />
+            <InputNumber />
           </Form.Item>
           <Form.Item>
             <Space>
@@ -279,19 +251,6 @@ const SetStokProduk = () => {
               <Button key="back" onClick={() => setModalShow(false)}>
                 Batal
               </Button>
-              <Popconfirm
-                title="Peringatan"
-                description="Yakin menghapus data?"
-                onConfirm={() => onDelete()}
-                okText="Ya"
-                cancelText="Batal"
-              >
-                {id != 0 &&
-                <Button key="delete" color="danger" variant='outlined' icon={<DeleteOutlined />}>
-                  Hapus
-                </Button>
-                }
-              </Popconfirm>
             </Space>
           </Form.Item>
         </Form>
