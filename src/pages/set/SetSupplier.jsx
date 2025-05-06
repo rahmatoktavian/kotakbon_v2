@@ -10,6 +10,9 @@ const SetSupplier = () => {
 
   const [searchFilter, setSearchFilter] = useState('');
   const [dataList, setDataList] = useState([]);
+  const [dataRange, setDataRange] = useState({ start:0, end:9 });
+  const [dataTotal, setDataTotal] = useState(0);
+  
   const [id, setID] = useState(0);
   const [modalShow, setModalShow] = useState(false);
   
@@ -18,18 +21,29 @@ const SetSupplier = () => {
 
   useEffect(() => {
     getDataList();
-  }, [searchFilter]);
+  }, [searchFilter, dataRange.start]);
 
   async function getDataList() {
     setIsLoading(true)
-    const { data } = await supabase.from("supplier")
-                      .select('id,nama')
+    const { data,count } = await supabase.from("supplier")
+                      .select('id,nama', { count:'exact' })
                       .ilike('nama', '%'+searchFilter+'%')
                       .order('nama', { ascending:true })
+                      .range(dataRange.start, dataRange.end)
    
     setDataList(data)
+    setDataTotal(count)
     setIsLoading(false)
   }
+
+  const onTableChange = (newPagination) => {
+    let startRange = (newPagination.current - 1) * newPagination.pageSize;
+    let endRange = newPagination.current * newPagination.pageSize - 1;
+    setDataRange({
+      start: startRange,
+      end: endRange,
+    });
+  };
 
   async function showDetail(id) {
     setIsLoading(true)
@@ -149,6 +163,12 @@ const SetSupplier = () => {
         rowKey="id" 
         style={{marginTop:10}} 
         loading={isLoading}
+        onChange={onTableChange}
+        pagination={{
+          total: dataTotal,
+          hideOnSinglePage: true,
+          showSizeChanger: false,
+        }}
       />
 
       <Modal 

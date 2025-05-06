@@ -287,6 +287,7 @@ const SetProduk = () => {
         pagination={{
           total: dataTotal,
           hideOnSinglePage: true,
+          showSizeChanger: false,
         }}
         // scroll={{ x: 500 }}
       />

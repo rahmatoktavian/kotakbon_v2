@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Col, Row, Spin, Modal, List, Typography, Divider, Form, Button, Input, Select, Tabs, message, InputNumber, Card } from 'antd';
+import { Col, Row, Spin, Modal, List, Typography, Divider, Form, Button, Input, Select, Tabs, message, InputNumber, Pagination } from 'antd';
 import { PlusOutlined, MinusOutlined, CheckOutlined, } from '@ant-design/icons';
 import { PDFViewer, Text, View, Page, Document, StyleSheet } from '@react-pdf/renderer';
 
@@ -46,7 +46,14 @@ const styles = StyleSheet.create({
 });
 
 const TrxInput = () => {
-  const currDate = new Date().toISOString().slice(0, 10);
+  // const currDate = new Date().toISOString().slice(0, 10);
+  const currDate = new Date().toLocaleString("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).slice(0, 10);
+
   const dataPesananKode = Math.floor(Math.random() * 999999);
 
   const [form] = Form.useForm();
@@ -56,7 +63,9 @@ const TrxInput = () => {
 
   const [searchFilter, setSearchFilter] = useState('');
   const [kategoriFilter, setKategoriFilter] = useState('');
-  const pageSize = 5;
+  const pageSize = 5
+  const [dataRange, setDataRange] = useState({ start:0, end:(pageSize-1) });
+  const [dataTotal, setDataTotal] = useState(0);
 
   const [dataProduk, setDataProduk] = useState([]);
   const [dataKategori, setDataKategori] = useState([]);
@@ -81,20 +90,21 @@ const TrxInput = () => {
   useEffect(() => {
     getProdukList();
     getKategoriList();
-  }, [searchFilter, kategoriFilter, dataPesananFinish]);
+  }, [searchFilter, kategoriFilter, dataPesananFinish, dataRange.start]);
 
   async function getProdukList() {
     setIsLoading(true)
-    
     let searchFilters = searchFilter != '' ? searchFilter : null;
     let kategoriFilters = kategoriFilter != '' ? kategoriFilter : null;
-    const { data } = await supabase.rpc("lap_stok_harian", { 
+    const { data } = await supabase.rpc("produk_stok_harian", { 
             date_filter:currDate,
             nama_filter:searchFilters, 
             kategori_filter:kategoriFilters, 
             supplier_filter:null,
+            limit_filter: (dataRange.end - dataRange.start + 1),
+            offset_filter: dataRange.start
         })
-    
+
     const newData = []
     data && data.map((val) => {
       let produkStokQty = val.produk_stok_qty ? val.produk_stok_qty : 0;
@@ -130,8 +140,21 @@ const TrxInput = () => {
     })
     
     setDataProduk(newData)
+
+    let rowTotal = data ? data[0].full_count : 0;
+    setDataTotal(rowTotal)
+    
     setIsLoading(false)
   }
+
+  const onTableChange = (newPagination) => {
+    let startRange = (newPagination - 1) * pageSize;
+    let endRange = newPagination * pageSize - 1;
+    setDataRange({
+      start: startRange,
+      end: endRange,
+    });
+  };
 
   async function getKategoriList() {
     const { data } = await supabase.from("kategori")
@@ -146,16 +169,7 @@ const TrxInput = () => {
 
     setDataKategori(listKategori)
   }
-
-  const onListChange = (newPagination) => {
-    let startRange = (newPagination - 1) * pageSize;
-    let endRange = newPagination * pageSize - 1;
-    setDataRange({
-      start: startRange,
-      end: endRange,
-    });
-  };
-
+  
   function onPesanInsert(produk) {
     //check already exist
     let isExist = false
@@ -318,30 +332,23 @@ const TrxInput = () => {
             <Title level={4} style={{marginTop:10, marginBottom:-10}}>Input Transaksi</Title>
             <Divider />
 
-            <Tabs defaultActiveKey="1" items={dataKategori} onChange={(value) => setKategoriFilter(value)} style={{ marginLeft:10, marginTop:-20 }} />
+            <Tabs 
+              defaultActiveKey="1" 
+              items={dataKategori} 
+              onChange={(value) => setKategoriFilter(value)} 
+              tabPosition='top'
+              style={{ marginLeft:10, marginTop:-20 }} />
 
             <Search placeholder="Cari produk" allowClear onChange={(e) => setSearchFilter(e.target.value)} style={{ marginBottom:20 }} />
             
-            {/* <Row gutter={14}>
-              {dataProduk && dataProduk.map((produk, index) => (
-              <Col span={6} style={{marginBottom:20}} key={index}>
-                <Card title={produk.nama} variant="borderless" type="inner">
-                  Rp. {produk.harga.toLocaleString()}
-                  <Button block size="small" type="primary" style={{marginTop:10}} onClick={() => onPesanInsert(produk)} disabled={produk.disabled}>
-                  Pilih
-                  </Button>
-                </Card>
-              </Col>
-              ))}
-            </Row> */}
-
             <List
               itemLayout="horizontal"
               dataSource={dataProduk}
-              pagination={{
-                pageSize: pageSize,
-                hideOnSinglePage: true,
-              }}
+              // pagination={{
+              //   pageSize: pageSize,
+              //   hideOnSinglePage: true,
+              //   showSizeChanger: false,
+              // }}
               renderItem={(item, index) => (
                 <List.Item
                   key={index}
@@ -359,6 +366,11 @@ const TrxInput = () => {
                 </List.Item>
               )}
             />
+            <Pagination 
+              total={dataTotal} 
+              onChange={(page) => onTableChange(page)} 
+              showSizeChanger={false}
+              style={{ marginTop:10, float:'right' }} />
         </Col>
 
         <Col span={1}></Col>

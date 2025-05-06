@@ -6,7 +6,12 @@ import { supabase } from '../../config/supabase';
 import dayjs from 'dayjs';
 
 const LapStokHarian = () => {
-  const currDate = new Date().toISOString().slice(0, 10);
+  const currDate = new Date().toLocaleString("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).slice(0, 10);
   const dateFormat = 'YYYY-MM-DD';
 
   const [form] = Form.useForm();
@@ -16,11 +21,13 @@ const LapStokHarian = () => {
   const [searchFilter, setSearchFilter] = useState('');
   const [dateFilter, setDateFilter] = useState(dayjs().format(dateFormat));
   const [supplierFilter, setSupplierFilter] = useState('');
-  const [dataRange, setDataRange] = useState({ start:0, end:9 });
-  const [dataTotal, setDataTotal] = useState(0);
+  
   const [dataList, setDataList] = useState([]);
   const [dataSupplier, setDataSupplier] = useState([]);
-
+  const pageSize = 10
+  const [dataRange, setDataRange] = useState({ start:0, end:(pageSize-1) });
+  const [dataTotal, setDataTotal] = useState(0);
+  
   const [produkID, setProdukID] = useState(0);
   const [modalShow, setModalShow] = useState(false);
   
@@ -34,23 +41,29 @@ const LapStokHarian = () => {
 
   async function getDataList() {
     setIsLoading(true)
-
     let searchFilters = searchFilter != '' ? searchFilter : null;
     let supplierFilters = supplierFilter != '' ? supplierFilter : null;
-    const { data } = await supabase.rpc("lap_stok_harian", { 
+    const { data } = await supabase.rpc("produk_stok_harian", { 
         date_filter:dateFilter,
         nama_filter:searchFilters, 
         kategori_filter:null, 
         supplier_filter:supplierFilters,
-    })
-    const dataListResult = []
-    data.map((val) => {
-      if(val.produk_stok_qty > 0) {
-        dataListResult.push(val)
-      }
+        limit_filter: (dataRange.end - dataRange.start + 1),
+        offset_filter: dataRange.start
     })
 
-    setDataList(dataListResult)
+    // const dataListResult = []
+    // data.map((val) => {
+    //   if(val.produk_stok_qty > 0) {
+    //     dataListResult.push(val)
+    //   }
+    // })
+
+    setDataList(data)
+
+    let rowTotal = data ? data[0].full_count : 0;
+    setDataTotal(rowTotal)
+
     setIsLoading(false)
   }
 
@@ -149,16 +162,19 @@ const LapStokHarian = () => {
     },
     {
       title: 'Stok Awal',
-      dataIndex: 'produk_stok_qty',
+      // dataIndex: 'produk_stok_qty',
       key: 'produk_stok_qty',
       align: 'right',
+      render: (_, record) => (
+        <>{record.produk_stok_qty ? record.produk_stok_qty : '-'}</>
+      ),
     },
     {
       title: 'Total Penjualan',
       key: 'total_penjualan',
       align: 'right',
       render: (_, record) => (
-        <>{record.produk_penjualan_qty ? record.produk_penjualan_qty : 0}</>
+        <>{record.produk_penjualan_qty ? record.produk_penjualan_qty : '-'}</>
       ),
     },
     {
@@ -166,7 +182,7 @@ const LapStokHarian = () => {
       key: 'stok_awal',
       align: 'right',
       render: (_, record) => (
-        <>{record.produk_penjualan_qty ? (record.produk_stok_qty - record.produk_penjualan_qty) : record.produk_stok_qty}</>
+        <>{record.produk_stok_qty ? (record.produk_stok_qty - record.produk_penjualan_qty) : '-'}</>
       ),
     },
     {
@@ -211,7 +227,7 @@ const LapStokHarian = () => {
                 />
       </Space>
       
-      <Title level={5} style={{ fontSize:11 }} align="right">Biaya Modal: Harga Modal x Total Penjualan</Title>
+      <Title level={5} style={{ fontSize:11 }} align="right">Biaya Modal: Total Penjualan x Harga Modal</Title>
       <Table 
         columns={columns} 
         dataSource={dataList} 
@@ -222,6 +238,7 @@ const LapStokHarian = () => {
         pagination={{
           total: dataTotal,
           hideOnSinglePage: true,
+          showSizeChanger: false,
         }}
         // summary={dataList => {
         //   let totalStokAwal = 0;

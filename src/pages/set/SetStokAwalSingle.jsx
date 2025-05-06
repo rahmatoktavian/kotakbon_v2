@@ -6,7 +6,12 @@ import { supabase } from '../../config/supabase';
 import dayjs from 'dayjs';
 
 const SetStokProduk = () => {
-  const currDate = new Date().toISOString().slice(0, 10);
+  const currDate = new Date().toLocaleString("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).slice(0, 10);
   const dateFormat = 'YYYY-MM-DD';
 
   const [form] = Form.useForm();

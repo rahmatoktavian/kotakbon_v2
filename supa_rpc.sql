@@ -21,6 +21,62 @@ AS $function$
   ORDER BY tanggal
 $function$;
 
+--produk_stok_harian
+CREATE OR REPLACE FUNCTION produk_stok_harian(
+  date_filter date, 
+  nama_filter varchar, 
+  kategori_filter int, 
+  supplier_filter int,
+  limit_filter int,
+  offset_filter int
+)
+RETURNS TABLE(
+  full_count bigint,
+  id int, 
+  kategori_id int, 
+  nama varchar, 
+  harga bigint, 
+  hpp bigint, 
+  supplier_nama varchar, 
+  produk_stok_qty bigint, 
+  produk_penjualan_qty bigint, 
+  produk_penjualan_hpp bigint
+)
+LANGUAGE sql
+AS $function$
+    SELECT 
+      count(produk.id) OVER() AS full_count,
+      produk.id, 
+      produk.kategori_id, 
+      produk.nama, 
+      produk.harga, 
+      produk.hpp, 
+      supplier.nama AS supplier_nama,
+      (SELECT produk_stok.qty 
+         FROM produk_stok 
+         WHERE produk.id = produk_stok.produk_id 
+           AND produk_stok.tanggal = date_filter) AS produk_stok_qty,
+      (SELECT SUM(produk_penjualan.qty) 
+         FROM produk_penjualan 
+         JOIN penjualan ON produk_penjualan.penjualan_id = penjualan.id 
+         WHERE produk.id = produk_penjualan.produk_id 
+           AND penjualan.tanggal = date_filter) AS produk_penjualan_qty,
+      (SELECT SUM(produk_penjualan.qty * produk_penjualan.hpp) 
+         FROM produk_penjualan 
+         JOIN penjualan ON produk_penjualan.penjualan_id = penjualan.id 
+         WHERE produk.id = produk_penjualan.produk_id 
+           AND penjualan.tanggal = date_filter) AS produk_penjualan_hpp
+    FROM produk
+    JOIN supplier ON produk.supplier_id = supplier.id
+    WHERE 
+      (kategori_filter IS NULL OR produk.kategori_id = kategori_filter)
+      AND (supplier_filter IS NULL OR produk.supplier_id = supplier_filter)
+      AND (nama_filter IS NULL OR produk.nama ILIKE '%' || nama_filter || '%')
+    ORDER BY produk.nama
+    LIMIT limit_filter
+    OFFSET offset_filter
+$function$;
+
 
 --lap_stok_harian
 CREATE OR REPLACE FUNCTION lap_stok_harian(
