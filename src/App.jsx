@@ -18,6 +18,7 @@ import SetSupplier from "./pages/set/SetSupplier";
 import SetKategori from "./pages/set/SetKategori";
 
 const { Title } = Typography;
+const basename = "/kotakbon_v2";
 
 const App = () => {
   const [form] = Form.useForm()
@@ -106,7 +107,7 @@ const App = () => {
   // logged
   } else {
     return (
-        <BrowserRouter>
+        <BrowserRouter basename={basename}>
           <Routes>
             <Route path="/" element={<AppLayout />}>
               <Route index element={<TrxInput />} />
