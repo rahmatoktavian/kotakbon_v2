@@ -96,7 +96,7 @@ const TrxInput = () => {
     setIsLoading(true)
     let searchFilters = searchFilter != '' ? searchFilter : null;
     let kategoriFilters = kategoriFilter != '' ? kategoriFilter : null;
-    const { data } = await supabase.rpc("produk_stok_harian", { 
+    const { data } = await supabase.rpc("produk_stok_harian_v2", { 
             date_filter:currDate,
             nama_filter:searchFilters, 
             kategori_filter:kategoriFilters, 

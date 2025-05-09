@@ -9,8 +9,9 @@ import AppLayout from "./AppLayout";
 import TrxInput from "./pages/trx/TrxInput";
 import TrxList from "./pages/trx/TrxList";
 
-import LapPenjualanHarian from "./pages/lap/LapPenjualanHarian";
+import LapSupplierHarian from "./pages/lap/LapSupplierHarian";
 import LapStokHarian from "./pages/lap/LapStokHarian";
+import LapPenjualanHarian from "./pages/lap/LapPenjualanHarian";
 
 import SetStokAwal from "./pages/set/SetStokAwal";
 import SetProduk from "./pages/set/SetProduk";
@@ -113,8 +114,9 @@ const App = () => {
               <Route index element={<TrxInput />} />
               <Route path="/trxlist" element={<TrxList />} />
 
-              <Route path="/lappenjualanharian" element={<LapPenjualanHarian />} />
               <Route path="/lapstokharian" element={<LapStokHarian />} />
+              <Route path="/lapsupplierharian" element={<LapSupplierHarian />} />
+              <Route path="/lappenjualanharian" element={<LapPenjualanHarian />} />
 
               <Route path="/setstokawal" element={<SetStokAwal />} />
               <Route path="/setproduk" element={<SetProduk />} />

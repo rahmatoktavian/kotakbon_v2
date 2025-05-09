@@ -34,12 +34,16 @@ const menuItems = [
     icon: <FileDoneOutlined />,
     children: [
       {
-        key: 'lappenjualanharian',
-        label: 'Rekap Penjualan Harian',
+        key: 'lapsupplierharian',
+        label: 'Rekap Supplier Harian',
       },
       {
         key: 'lapstokharian',
         label: 'Rekap Stok Harian',
+      },
+      {
+        key: 'lappenjualanharian',
+        label: 'Rekap Penjualan Harian',
       },
     ],
   },

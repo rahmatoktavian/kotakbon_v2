@@ -34,6 +34,11 @@ const LapStokHarian = () => {
   const { Title, Text } = Typography;
   const { Search } = Input;
 
+  const [dataTotalStokAwal, setDataTotalStokAwal] = useState(0);
+  const [dataTotalPenjualan, setDataTotalPenjualan] = useState(0);
+  const [dataTotalStokAkhir, setDataTotalStokAkhir] = useState(0);
+  const [dataTotalModal, setDataTotalModal] = useState(0);
+
   useEffect(() => {
     getDataList()
     getSupplierList()
@@ -43,7 +48,7 @@ const LapStokHarian = () => {
     setIsLoading(true)
     let searchFilters = searchFilter != '' ? searchFilter : null;
     let supplierFilters = supplierFilter != '' ? supplierFilter : null;
-    const { data } = await supabase.rpc("produk_stok_harian", { 
+    const { data } = await supabase.rpc("produk_stok_harian_v2", { 
         date_filter:dateFilter,
         nama_filter:searchFilters, 
         kategori_filter:null, 
@@ -63,6 +68,16 @@ const LapStokHarian = () => {
 
     let rowTotal = data ? data[0].full_count : 0;
     setDataTotal(rowTotal)
+
+    let totalStokAwal = data ? data[0].total_produk_stok_qty : 0;
+    let totalPenjualan = data ? data[0].total_produk_penjualan_qty : 0;
+    let totalStokAkhir = data ? (data[0].total_produk_stok_qty - data[0].total_produk_penjualan_qty) : 0;
+    let totalModal = data ? data[0].total_produk_penjualan_hpp : 0;
+
+    setDataTotalStokAwal(totalStokAwal)
+    setDataTotalPenjualan(totalPenjualan)
+    setDataTotalStokAkhir(totalStokAkhir)
+    setDataTotalModal(totalModal)
 
     setIsLoading(false)
   }
@@ -240,41 +255,37 @@ const LapStokHarian = () => {
           hideOnSinglePage: true,
           showSizeChanger: false,
         }}
-        // summary={dataList => {
-        //   let totalStokAwal = 0;
-        //   let totalPenjualan = 0;
-        //   let totalStokAkhir = 0;
-        //   let totalModal = 0;
-        //   dataList.forEach(({ produk_stok_qty, produk_penjualan_qty, produk_penjualan_hpp }) => {
-        //     totalStokAwal += produk_stok_qty;
-        //     totalPenjualan += produk_penjualan_qty;
-        //     totalStokAkhir += (produk_stok_qty-produk_penjualan_qty);
-        //     totalModal += produk_penjualan_hpp;
-        //   });
-        //   return (
-        //     <>
-        //       <Table.Summary.Row>
-        //         <Table.Summary.Cell index={0}></Table.Summary.Cell>
-        //         <Table.Summary.Cell index={1}>
-        //           <span style={{fontWeight:'bold'}}>Total</span>
-        //         </Table.Summary.Cell>
-        //         <Table.Summary.Cell index={2} align="right">
-        //           <span style={{fontWeight:'bold'}}>{totalStokAwal.toLocaleString()}</span>
-        //         </Table.Summary.Cell>
-        //         <Table.Summary.Cell index={3} align="right">
-        //           <span style={{fontWeight:'bold'}}>{totalPenjualan.toLocaleString()}</span>
-        //         </Table.Summary.Cell>
-        //         <Table.Summary.Cell index={4} align="right">
-        //           <span style={{fontWeight:'bold'}}>{totalStokAkhir.toLocaleString()}</span>
-        //         </Table.Summary.Cell>
-        //         <Table.Summary.Cell index={4}></Table.Summary.Cell>
-        //         <Table.Summary.Cell index={5} align="right">
-        //           <span style={{fontWeight:'bold'}}>{totalModal.toLocaleString()}</span>
-        //         </Table.Summary.Cell>
-        //       </Table.Summary.Row>
-        //     </>
-        //   );
-        // }}
+        summary={() => {
+          // dataList.forEach(({ total_produk_stok_qty, total_produk_penjualan_qty, total_produk_penjualan_hpp }) => {
+          //   totalStokAwal += total_produk_stok_qty;
+          //   totalPenjualan += total_produk_penjualan_qty;
+          //   totalStokAkhir += (total_produk_stok_qty - total_produk_penjualan_qty);
+          //   totalModal += total_produk_penjualan_hpp;
+          // });
+          return (
+            <>
+              <Table.Summary.Row>
+                <Table.Summary.Cell index={0}></Table.Summary.Cell>
+                <Table.Summary.Cell index={1}>
+                  <span style={{fontWeight:'bold'}}>Total</span>
+                </Table.Summary.Cell>
+                <Table.Summary.Cell index={2} align="right">
+                  <span style={{fontWeight:'bold'}}>{dataTotalStokAwal ? dataTotalStokAwal.toLocaleString() : 0}</span>
+                </Table.Summary.Cell>
+                <Table.Summary.Cell index={3} align="right">
+                  <span style={{fontWeight:'bold'}}>{dataTotalPenjualan ? dataTotalPenjualan.toLocaleString() : 0}</span>
+                </Table.Summary.Cell>
+                <Table.Summary.Cell index={4} align="right">
+                  <span style={{fontWeight:'bold'}}>{dataTotalStokAkhir ? dataTotalStokAkhir.toLocaleString() : 0}</span>
+                </Table.Summary.Cell>
+                <Table.Summary.Cell index={4}></Table.Summary.Cell>
+                <Table.Summary.Cell index={5} align="right">
+                  <span style={{fontWeight:'bold'}}>{dataTotalModal ? dataTotalModal.toLocaleString() : 0}</span>
+                </Table.Summary.Cell>
+              </Table.Summary.Row>
+            </>
+          );
+        }}
       />
 
       <Modal 
