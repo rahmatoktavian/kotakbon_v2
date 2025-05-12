@@ -85,21 +85,36 @@ const SetSupplier = () => {
       }
       
     } else {
-      const { error } = await supabase
-      .from('supplier')
-      .insert({ nama:values.nama })
+      //check name is exist
+      const { data:exist } = await supabase
+        .from('supplier')
+        .select('id')
+        .ilike('nama', '%'+values.nama+'%')
+        .single()
 
-      if(error) {
+      if(exist) {
           messageApi.open({
             type: 'error',
-            content: error.message,
-          });
+            content: 'Nama sudah digunakan',
+          })
       } else {
-          messageApi.open({
-            type: 'success',
-            content: 'Berhasil simpan data',
-          });
+        const { error } = await supabase
+        .from('supplier')
+        .insert({ nama:values.nama })
+
+        if(error) {
+            messageApi.open({
+              type: 'error',
+              content: error.message,
+            });
+        } else {
+            messageApi.open({
+              type: 'success',
+              content: 'Berhasil simpan data',
+            });
+        }
       }
+
     }
 
     getDataList()

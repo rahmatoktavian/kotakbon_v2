@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Space, Typography, Divider, Table, DatePicker, Input, Select, Button, Modal } from 'antd';
+import { Space, Typography, Divider, Table, DatePicker, Input, Select, Button, Modal, Popconfirm, message } from 'antd';
 import { PrinterOutlined } from '@ant-design/icons';
 import { PDFViewer, Text, View, Page, Document, StyleSheet } from '@react-pdf/renderer';
 
@@ -48,9 +48,13 @@ const styles = StyleSheet.create({
 
 const TrxList = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [messageApi, contextHolder] = message.useMessage();
   const [modalShow, setModalShow] = useState(false);
   const [dataList, setDataList] = useState([]);
+  const [dataRange, setDataRange] = useState({ start:0, end:9 });
+  const [dataTotal, setDataTotal] = useState(0);
 
+  const [dataPenjualanID, setDataPenjualanID] = useState(0);
   const [dataPenjualanKode, setDataPenjualanKode] = useState('');
   const [dataPenjualanTanggal, setDataPenjualanTanggal] = useState('');
   const [dataPenjualanTotalHarga, setDataPenjualanTotalHarga] = useState(0);
@@ -76,27 +80,39 @@ const TrxList = () => {
 
   useEffect(() => {
     getDataList();
-  }, [searchFilter, dateFilter, metodeBayarFilter]);
+  }, [searchFilter, dateFilter, metodeBayarFilter, dataRange.start]);
 
   async function getDataList() {
     setIsLoading(true)
     let query = supabase.from("penjualan")
-                      .select('id,kode,tanggal,total_harga,list_produk,nominal_bayar,metode_bayar,keterangan')
-                      .ilike('list_produk', '%'+searchFilter+'%')
+                      .select('id,kode,tanggal,total_harga,list_produk,nominal_bayar,metode_bayar,keterangan,lunas,created_at', { count:'exact' })
+                      .ilike('keterangan', '%'+searchFilter+'%')
                       .eq('tanggal', dateFilter)
                       .order('id', { ascending:false })
+                      .range(dataRange.start, dataRange.end)
     
     if (metodeBayarFilter != '')
       query = query.eq('metode_bayar', metodeBayarFilter)
 
-    const { data } = await query;
+    const { data, count } = await query;
     setDataList(data)
+    setDataTotal(count)
     setIsLoading(false)
   }
 
+  const onTableChange = (newPagination) => {
+    let startRange = (newPagination.current - 1) * newPagination.pageSize;
+    let endRange = newPagination.current * newPagination.pageSize - 1;
+    setDataRange({
+      start: startRange,
+      end: endRange,
+    });
+  };
+
   async function onShowInvoice(penjualan) {
+    setDataPenjualanID(penjualan.id)
     setDataPenjualanKode(penjualan.kode)
-    setDataPenjualanTanggal(penjualan.tanggal)
+    setDataPenjualanTanggal(dayjs(penjualan.created_at).format('YYYY-MM-DD HH:mm'))
     setDataPenjualanTotalHarga(penjualan.total_harga)
     setDataPenjualanTotalBayar(penjualan.nominal_bayar)
     setDataPenjualanNote(penjualan.keterangan)
@@ -111,9 +127,53 @@ const TrxList = () => {
     setModalShow(true)
   }
 
+  async function onDelete() {
+    setIsLoading(true)
+    
+    // delete penjualan produk
+    const {error} = await supabase
+          .from('produk_penjualan')
+          .delete()
+          .eq('penjualan_id',dataPenjualanID)
+    
+    // delete penjualan
+    await supabase
+            .from('penjualan')
+            .delete()
+            .eq('id',dataPenjualanID)
+        
+    messageApi.open({
+      type: 'success',
+      content: 'Berhasil hapus data',
+    });
+
+    getDataList()
+    setModalShow(false)
+    setIsLoading(false)
+  }
+
   const columns = [
     {
-      title: 'Produk',
+      title: 'Kode',
+      key: 'kode',
+      render: (_, record) => (
+        <>{'#'+record.kode}</>
+      ),
+    },
+    {
+      title: 'Status',
+      key: 'lunas',
+      render: (_, record) => (
+        <>{record.lunas == 1 ? 'LUNAS' : 'OPEN BILL'}</>
+      ),
+    },
+    {
+      title: 'Note/Pemesan',
+      dataIndex: 'keterangan',
+      key: 'keterangan',
+    },
+    {
+      title: 'List Produk',
       dataIndex: 'list_produk',
       key: 'list_produk',
     },
@@ -130,7 +190,7 @@ const TrxList = () => {
       key: 'nominal_bayar',
       align: 'right',
       render: (_, record) => (
-        <>{record.nominal_bayar.toLocaleString()}</>
+        <>{record.lunas == 1 ? record.nominal_bayar.toLocaleString() : '-'}</>
       ),
     },
     {
@@ -138,18 +198,22 @@ const TrxList = () => {
       key: 'kembalian',
       align: 'right',
       render: (_, record) => (
-        <>{(record.nominal_bayar - record.total_harga).toLocaleString()}</>
+        <>{record.lunas == 1 ? (record.nominal_bayar - record.total_harga).toLocaleString() : '-'}</>
       ),
     },
     {
-      title: 'Metode Bayar',
+      title: 'Metode',
       key: 'metode_bayar',
-      dataIndex: 'metode_bayar',
+      render: (_, record) => (
+        <>{record.lunas == 1 ? record.metode_bayar : '-'}</>
+      ),
     },
     {
-      title: 'Keterangan',
-      dataIndex: 'keterangan',
-      key: 'keterangan',
+      title: 'Waktu',
+      key: 'created_at',
+      render: (_, record) => (
+        <>{dayjs(record.created_at).format('HH:mm')}</>
+      ),
     },
     {
       title: 'Struk',
@@ -162,6 +226,7 @@ const TrxList = () => {
 
   return (
     <>
+      {contextHolder}
       <Title level={4} style={{marginTop:10, marginBottom:-10}}>Riwayat Transaksi</Title>
       <Divider />
 
@@ -172,7 +237,7 @@ const TrxList = () => {
           onChange={(date, dateString) => setDateFilter(dateString)} 
           allowClear={false}
         />
-        <Search placeholder="Cari produk" allowClear onChange={(e) => setSearchFilter(e.target.value)} />
+        <Search placeholder="Cari note" allowClear onChange={(e) => setSearchFilter(e.target.value)} />
         <Select
           showSearch
           optionFilterProp="label"
@@ -189,35 +254,40 @@ const TrxList = () => {
         rowKey="id" 
         style={{marginTop:10}} 
         loading={isLoading}
-        pagination={false} 
-        summary={dataList => {
-          let totalHarga = 0;
-          let totalBayar = 0;
-          let totalKembalian = 0;
-          dataList.forEach(({ total_harga, nominal_bayar }) => {
-            totalHarga += total_harga;
-            totalBayar += nominal_bayar;
-            totalKembalian += (nominal_bayar-total_harga);
-          });
-          return (
-            <>
-              <Table.Summary.Row>
-                <Table.Summary.Cell index={0}>
-                  <span style={{fontWeight:'bold'}}>Total</span>
-                </Table.Summary.Cell>
-                <Table.Summary.Cell index={1} align='right'>
-                  <span style={{fontWeight:'bold'}}>{totalHarga.toLocaleString()}</span>
-                </Table.Summary.Cell>
-                <Table.Summary.Cell index={2} align='right'>
-                  <span style={{fontWeight:'bold'}}>{totalBayar.toLocaleString()}</span>
-                </Table.Summary.Cell>
-                <Table.Summary.Cell index={3} align='right'>
-                  <span style={{fontWeight:'bold'}}>{totalKembalian.toLocaleString()}</span>
-                </Table.Summary.Cell>
-              </Table.Summary.Row>
-            </>
-          );
+        onChange={onTableChange}
+        pagination={{
+          total: dataTotal,
+          hideOnSinglePage: true,
+          showSizeChanger: false,
         }}
+        // summary={dataList => {
+        //   let totalHarga = 0;
+        //   let totalBayar = 0;
+        //   let totalKembalian = 0;
+        //   dataList.forEach(({ total_harga, nominal_bayar }) => {
+        //     totalHarga += total_harga;
+        //     totalBayar += nominal_bayar;
+        //     totalKembalian += (nominal_bayar-total_harga);
+        //   });
+        //   return (
+        //     <>
+        //       <Table.Summary.Row>
+        //         <Table.Summary.Cell index={0}>
+        //           <span style={{fontWeight:'bold'}}>Total</span>
+        //         </Table.Summary.Cell>
+        //         <Table.Summary.Cell index={1} align='right'>
+        //           <span style={{fontWeight:'bold'}}>{totalHarga.toLocaleString()}</span>
+        //         </Table.Summary.Cell>
+        //         <Table.Summary.Cell index={2} align='right'>
+        //           <span style={{fontWeight:'bold'}}>{totalBayar.toLocaleString()}</span>
+        //         </Table.Summary.Cell>
+        //         <Table.Summary.Cell index={3} align='right'>
+        //           <span style={{fontWeight:'bold'}}>{totalKembalian.toLocaleString()}</span>
+        //         </Table.Summary.Cell>
+        //       </Table.Summary.Row>
+        //     </>
+        //   );
+        // }}
       />
 
       <Modal 
@@ -227,9 +297,22 @@ const TrxList = () => {
         centered
         width={450}
         footer={[
-          <Button type="primary" key="back" onClick={() => setModalShow(false)}>
-            OK
-          </Button>
+          <>
+            <Button type="primary" key="back" onClick={() => setModalShow(false)}>
+              Tutup
+            </Button>
+            <Popconfirm
+              title="Peringatan"
+              description="Yakin menghapus data?"
+              onConfirm={() => onDelete()}
+              okText="Ya"
+              cancelText="Batal"
+            >
+              <Button color="danger" variant="outlined" key="cancel">
+                Hapus
+              </Button>
+            </Popconfirm>
+          </>
         ]}
       >
         <PDFViewer width="400" height="500" className="app" >
@@ -239,11 +322,11 @@ const TrxList = () => {
               <Text style={styles.address}>Angkatan 2024/2025</Text>
 
               <View style={styles.row}>
-                <Text>Transaksi</Text>
+                <Text>Kode Transaksi</Text>
                 <Text>#{dataPenjualanKode}</Text>
               </View>
               <View style={styles.row}>
-                <Text>Tanggal</Text>
+                <Text>Waktu Transaksi</Text>
                 <Text>{dataPenjualanTanggal}</Text>
               </View>
 

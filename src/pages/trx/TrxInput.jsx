@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Col, Row, Spin, Modal, List, Typography, Divider, Form, Button, Input, Select, Tabs, message, InputNumber, Pagination } from 'antd';
+import { Col, Row, Table, Spin, Modal, List, Typography, Divider, Form, Button, Input, Select, Tabs, message, InputNumber, Pagination } from 'antd';
 import { PlusOutlined, MinusOutlined, CheckOutlined, } from '@ant-design/icons';
 import { PDFViewer, Text, View, Page, Document, StyleSheet } from '@react-pdf/renderer';
 
@@ -63,7 +63,7 @@ const TrxInput = () => {
 
   const [searchFilter, setSearchFilter] = useState('');
   const [kategoriFilter, setKategoriFilter] = useState('');
-  const pageSize = 5
+  const pageSize = 10;
   const [dataRange, setDataRange] = useState({ start:0, end:(pageSize-1) });
   const [dataTotal, setDataTotal] = useState(0);
 
@@ -72,11 +72,17 @@ const TrxInput = () => {
 
   const [dataPesanan, setDataPesanan] = useState([]);
   const [dataPesananTotal, setDataPesananTotal] = useState(0);
+  const [dataPesananPaymentStatus, setDataPesananPaymentStatus] = useState(1);
   const [dataPesananPaymentMethod, setDataPesananPaymentMethod] = useState('CASH');
   const [dataPesananPayment, setDataPesananPayment] = useState('');
   const [dataPesananPaymentExchange, setDataPesananPaymentExchange] = useState('');
   const [dataPesananNote, setDataPesananNote] = useState('');
   const [dataPesananFinish, setDataPesananFinish] = useState(false);
+
+  const statusLunas = [
+    { key:0, label: 'OPEN BILL', value: 0 },
+    { key:1, label: 'LUNAS', value: 1 },
+  ];
 
   const metodePembayaran = [
     { key:0, label: 'CASH', value: 'CASH' },
@@ -89,7 +95,7 @@ const TrxInput = () => {
 
   useEffect(() => {
     getProdukList();
-    getKategoriList();
+    // getKategoriList();
   }, [searchFilter, kategoriFilter, dataPesananFinish, dataRange.start]);
 
   async function getProdukList() {
@@ -129,6 +135,7 @@ const TrxInput = () => {
 
       newData.push({ 
         id:val.id, 
+        supplier_nama: val.supplier_nama,
         kategori_id:val.kategori_id,
         nama:val.nama,
         harga:val.harga,
@@ -147,9 +154,18 @@ const TrxInput = () => {
     setIsLoading(false)
   }
 
+  // const onTableChange = (newPagination) => {
+  //   let startRange = (newPagination - 1) * pageSize;
+  //   let endRange = newPagination * pageSize - 1;
+  //   setDataRange({
+  //     start: startRange,
+  //     end: endRange,
+  //   });
+  // };
+
   const onTableChange = (newPagination) => {
-    let startRange = (newPagination - 1) * pageSize;
-    let endRange = newPagination * pageSize - 1;
+    let startRange = (newPagination.current - 1) * newPagination.pageSize;
+    let endRange = newPagination.current * newPagination.pageSize - 1;
     setDataRange({
       start: startRange,
       end: endRange,
@@ -227,7 +243,7 @@ const TrxInput = () => {
     setDataPesananTotal(pesananTotal)
   }
 
-  async function onBayar() {
+  async function onFinish() {
     setDataPesananFinish(false)
     setIsLoading(true)
 
@@ -261,8 +277,9 @@ const TrxInput = () => {
       total_hpp: total_hpp,
       keterangan: dataPesananNote,
       metode_bayar: dataPesananPaymentMethod,
-      nominal_bayar: dataPesananPaymentMethod == 'CASH' ? dataPesananPayment : dataPesananTotal,
-      nominal_kembalian: dataPesananPaymentMethod == 'CASH' ? dataPesananPaymentExchange : 0,
+      nominal_bayar: dataPesananPaymentStatus == 1 && dataPesananPaymentMethod == 'CASH' ? dataPesananPayment : dataPesananTotal,
+      nominal_kembalian: dataPesananPaymentStatus == 1 && dataPesananPaymentMethod == 'CASH' ? dataPesananPaymentExchange : 0,
+      lunas: dataPesananPaymentStatus,
      }]
 
     const { data:data_penjualan, error:error_penjualan } = await supabase
@@ -288,11 +305,6 @@ const TrxInput = () => {
     const { error:error_produk_penjualan } = await supabase
       .from('produk_penjualan')
       .insert(list_produk)
-
-    //update produk stok
-    // const { error:error_produk } =  await supabase
-    //   .from('produk')
-    //   .upsert(list_produk_newstok)
 
     setIsLoading(false)
     setModalShow(true)
@@ -323,6 +335,34 @@ const TrxInput = () => {
     setDataPesananPaymentExchange(nominal_kembalian)
   }
 
+  const columns = [
+    {
+      title: 'Produk',
+      key: 'nama',
+      render: (_, record) => (
+        <>
+          <span>{record.nama}</span><br />
+          <span style={{color:'gray',fontSize:13}}>{record.harga.toLocaleString()}</span>
+        </>
+      )
+    },
+    {
+      title: 'Supplier',
+      dataIndex: 'supplier_nama',
+      key: 'supplier_nama',
+    },
+    {
+      title: 'Action',
+      key: 'action',
+      align: 'right',
+      render: (_, record) => (
+        <Button type="primary" onClick={record.disabled ? undefined : () => onPesanInsert(record)} disabled={record.disabled}>
+          {record.disabledLabel}
+        </Button>
+      ),
+    },
+  ];
+
   return (
     <Spin spinning={isLoading}>
       {contextHolder}
@@ -332,23 +372,18 @@ const TrxInput = () => {
             <Title level={4} style={{marginTop:10, marginBottom:-10}}>Input Transaksi</Title>
             <Divider />
 
-            <Tabs 
+            {/* <Tabs 
               defaultActiveKey="1" 
               items={dataKategori} 
               onChange={(value) => setKategoriFilter(value)} 
               tabPosition='top'
-              style={{ marginLeft:10, marginTop:-20 }} />
+              style={{ marginLeft:10, marginTop:-20 }} /> */}
 
-            <Search placeholder="Cari produk" allowClear onChange={(e) => setSearchFilter(e.target.value)} style={{ marginBottom:20 }} />
+            <Search placeholder="Cari produk" allowClear onChange={(e) => setSearchFilter(e.target.value)} />
             
-            <List
+            {/* <List
               itemLayout="horizontal"
               dataSource={dataProduk}
-              // pagination={{
-              //   pageSize: pageSize,
-              //   hideOnSinglePage: true,
-              //   showSizeChanger: false,
-              // }}
               renderItem={(item, index) => (
                 <List.Item
                   key={index}
@@ -365,12 +400,27 @@ const TrxInput = () => {
                   />
                 </List.Item>
               )}
-            />
+            /> 
             <Pagination 
               total={dataTotal} 
               onChange={(page) => onTableChange(page)} 
               showSizeChanger={false}
               style={{ marginTop:10, float:'right' }} />
+            */}
+
+            <Table 
+              columns={columns} 
+              dataSource={dataProduk} 
+              rowKey="id" 
+              style={{marginTop:10}} 
+              loading={isLoading}
+              onChange={onTableChange}
+              pagination={{
+                total: dataTotal,
+                hideOnSinglePage: true,
+                showSizeChanger: false,
+              }}
+            />
         </Col>
 
         <Col span={1}></Col>
@@ -389,10 +439,11 @@ const TrxInput = () => {
                   description={'Rp '+item.harga.toLocaleString()+' (Stok: '+item.stok+')'}
                 />
                 <Input
-                  addonBefore={<Button icon={<MinusOutlined />} size="small" color="primary" variant="outlined" onClick={() => onPesanUpdate('minus', item, index)} />}
-                  addonAfter={<Button icon={<PlusOutlined />} size="small" color="primary" variant="outlined" onClick={() => onPesanUpdate('plus', item, index)} />}
+                  addonBefore={<Button icon={<MinusOutlined />} size="small" type="primary" onClick={() => onPesanUpdate('minus', item, index)} />}
+                  addonAfter={<Button icon={<PlusOutlined />} size="small" type="primary" onClick={() => onPesanUpdate('plus', item, index)} disabled={item.qty >= item.stok ? true : false} />}
                   value={item.qty}
-                  style={{ width:135, textAlign:'center' }}
+                  style={{ width:130, textAlign:'center' }}
+                  variant="borderless"
                 />
               </List.Item>
             )}
@@ -401,48 +452,69 @@ const TrxInput = () => {
           <Divider />
           <List itemLayout="horizontal">
             <List.Item>
-              <List.Item.Meta title='Metode Bayar' />
+              <List.Item.Meta title='STATUS' />
+              <Select
+                  placeholder="Pilih"
+                  value={dataPesananPaymentStatus}
+                  onChange={(value) => setDataPesananPaymentStatus(value)}
+                  options={statusLunas}
+                  style={{ width:200 }}
+                />
+            </List.Item>
+
+            {dataPesananPaymentStatus == 1 &&
+            <List.Item>
+              <List.Item.Meta title='METODE' />
               <Select
                   placeholder="Pilih"
                   value={dataPesananPaymentMethod}
                   onChange={(value) => setDataPesananPaymentMethod(value)}
                   options={metodePembayaran}
-                  style={{ width:150 }}
+                  style={{ width:200 }}
                 />
             </List.Item>
+            }
+
             <List.Item>
-              <List.Item.Meta title='Total Pesanan' />
+              <List.Item.Meta title='TOTAL PESANAN' />
               <Title level={5}>{'Rp '+dataPesananTotal.toLocaleString()}</Title>
             </List.Item>
-            {dataPesananPaymentMethod == 'CASH' &&
-              <>
-                <List.Item>
-                  <List.Item.Meta title='Nominal Bayar' />
-                  <InputNumber
-                    value={dataPesananPayment}
-                    onChange={(value) => onChangeNominalBayar(value)}
-                    style={{ width:150 }}
-                  />
-                </List.Item>
-                <List.Item>
-                  <List.Item.Meta title='Kembalian' />
-                  <span>{dataPesananPayment < dataPesananTotal ? 0 : 'Rp '+dataPesananPaymentExchange.toLocaleString()}</span>
-                </List.Item>
-              </>
+
+            {(dataPesananPaymentStatus == 1 && dataPesananPaymentMethod == 'CASH') &&
+            <>
+              <List.Item>
+                <List.Item.Meta title='NOMINAL BAYAR' />
+                <InputNumber
+                  value={dataPesananPayment}
+                  onChange={(value) => onChangeNominalBayar(value)}
+                  formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  style={{ width:200 }}
+                />
+              </List.Item>
+              <List.Item>
+                <List.Item.Meta title='KEMBALIAN' />
+                <InputNumber
+                  value={dataPesananPayment < dataPesananTotal ? 0 : dataPesananPaymentExchange.toLocaleString()}
+                  disabled={true}
+                  style={{ width:200 }}
+                  align='right'
+                />
+                
+              </List.Item>
+            </>
             }
             <List.Item>
-              <List.Item.Meta title='Note' />
+              <List.Item.Meta title='NOTE / PEMESAN' />
               <Input
                 value={dataPesananNote}
                 onChange={(e) => setDataPesananNote(e.target.value)}
-                placeholder="Tidak wajib diisi"
-                style={{ width:150 }} 
+                style={{ width:200 }} 
               />
             </List.Item>
           </List>
           
-          <Button block key="save" type="primary" icon={<CheckOutlined />} loading={isLoading} style={{marginBottom:10}} size="large" onClick={() => onBayar()} disabled={dataPesananPaymentMethod == 'CASH' && dataPesananPayment < dataPesananTotal ? true : false}>
-            Bayar
+          <Button block key="save" type="primary" icon={<CheckOutlined />} loading={isLoading} style={{marginBottom:10}} size="large" onClick={() => onFinish()} disabled={dataPesananPaymentStatus == 1 && dataPesananPaymentMethod == 'CASH' && dataPesananPayment < dataPesananTotal ? true : false}>
+            {dataPesananPaymentStatus == 0 ? 'Simpan' : 'Bayar'}
           </Button>
 
           <Modal 

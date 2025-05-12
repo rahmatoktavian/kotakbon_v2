@@ -46,7 +46,7 @@ const SetProduk = () => {
     const { data, count } = await query;
     
     setDataList(data)
-    setDataTotal(count);
+    setDataTotal(count)
     setIsLoading(false)
   }
 
@@ -153,27 +153,42 @@ const SetProduk = () => {
       }
 
     } else {
-      const { error } = await supabase
-      .from('produk')
-      .insert({ 
-        kategori_id:values.kategori,
-        supplier_id:values.supplier,
-        nama:values.nama,
-        harga:values.harga,
-        hpp:values.hpp,
-       })
+      //check name is exist
+      const { data:exist } = await supabase
+        .from('produk')
+        .select('id')
+        .ilike('nama', '%'+values.nama+'%')
+        .single()
 
-       if(error) {
+      if(exist) {
           messageApi.open({
             type: 'error',
-            content: error.message,
-          });
-       } else {
-          messageApi.open({
-            type: 'success',
-            content: 'Berhasil simpan data',
-          });
-       }
+            content: 'Nama sudah digunakan',
+          })
+
+      } else {
+        const { error } = await supabase
+        .from('produk')
+        .insert({ 
+          kategori_id:values.kategori,
+          supplier_id:values.supplier,
+          nama:values.nama,
+          harga:values.harga,
+          hpp:values.hpp,
+        })
+
+        if(error) {
+            messageApi.open({
+              type: 'error',
+              content: error.message,
+            });
+        } else {
+            messageApi.open({
+              type: 'success',
+              content: 'Berhasil simpan data',
+            });
+        }
+      }
     }
 
     getDataList()

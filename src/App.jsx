@@ -18,6 +18,8 @@ import SetProduk from "./pages/set/SetProduk";
 import SetSupplier from "./pages/set/SetSupplier";
 import SetKategori from "./pages/set/SetKategori";
 
+import AuthResetPass from "./pages/auth/AuthResetPass";
+
 const { Title } = Typography;
 const basename = "/kotakbon_v2";
 
@@ -122,6 +124,9 @@ const App = () => {
               <Route path="/setproduk" element={<SetProduk />} />
               <Route index path="/setsupplier" element={<SetSupplier />} />
               <Route path="/setkategori" element={<SetKategori />} />
+
+              <Route path="/authresetpass" element={<AuthResetPass />} />
+              
             </Route>
           </Routes>
         </BrowserRouter>

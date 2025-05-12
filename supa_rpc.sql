@@ -15,7 +15,8 @@ AS $function$
   SELECT tanggal, SUM(total_harga) AS total_harga_harian, SUM(total_hpp) AS total_hpp_harian
           , SUM(nominal_bayar) AS nominal_bayar_harian, SUM(nominal_kembalian) AS nominal_kembalian_harian
   FROM penjualan
-  WHERE tanggal >= start_date_filter
+  WHERE lunas = 1
+  AND tanggal >= start_date_filter
   AND tanggal <= end_date_filter
   GROUP BY tanggal
   ORDER BY tanggal
@@ -119,7 +120,6 @@ AS $function$
           WHERE produk.id = produk_penjualan.produk_id 
             AND penjualan.tanggal = date_filter)
       ) OVER() AS total_produk_penjualan_hpp
-
     FROM produk
     JOIN supplier ON produk.supplier_id = supplier.id
     WHERE 

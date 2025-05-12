@@ -85,20 +85,35 @@ const SetKategori = () => {
       }
 
     } else {
-      const { error } = await supabase
-      .from('kategori')
-      .insert({ nama:values.nama })
+      //check name is exist
+      const { data:exist } = await supabase
+        .from('kategori')
+        .select('id')
+        .ilike('nama', '%'+values.nama+'%')
+        .single()
 
-      if(error) {
+      if(exist) {
           messageApi.open({
             type: 'error',
-            content: error.message,
-          });
-      } else {
-          messageApi.open({
-            type: 'success',
-            content: 'Berhasil simpan data',
-          });
+            content: 'Nama sudah digunakan',
+          })
+          
+      } else {  
+        const { error } = await supabase
+        .from('kategori')
+        .insert({ nama:values.nama })
+
+        if(error) {
+            messageApi.open({
+              type: 'error',
+              content: error.message,
+            });
+        } else {
+            messageApi.open({
+              type: 'success',
+              content: 'Berhasil simpan data',
+            });
+        }
       }
     }
 
