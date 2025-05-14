@@ -107,7 +107,7 @@ const AppLayout = () => {
       key: '1',
       icon: <EditOutlined />,
       label: (
-        <a onClick={() => navigate('authresetpass')}>
+        <a onClick={() => navigate('/authresetpass')}>
           Reset Password
         </a>
       ),
@@ -115,6 +115,7 @@ const AppLayout = () => {
     {
       key: '2',
       icon: <PoweroffOutlined />,
+      // label: 'Logout'
       label: (
         <a onClick={() => onLogout()}>
           Logout
@@ -131,14 +132,17 @@ const AppLayout = () => {
             <Title level={3} style={{marginTop:5, marginLeft:-20}}>kotakbon</Title>
           </Col>
           <Col span={4}>
-            <Dropdown menu={{ items }} style={{marginBottom:20}}>
+            <Dropdown.Button menu={{items}} style={{marginTop:5}}>
+              {dataUser}
+            </Dropdown.Button>
+            {/* <Dropdown menu={{ items }} style={{marginBottom:20}}>
               <a onClick={e => e.preventDefault()}>
                 <Space>
                   {dataUser}
                   <DownOutlined />
                 </Space>
               </a>
-            </Dropdown>
+            </Dropdown> */}
           </Col>
         </Row>
       </Header>
