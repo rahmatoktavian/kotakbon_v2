@@ -7,12 +7,12 @@ import AppLayout from "./AppLayout";
 import TrxInput from "./pages/trx/TrxInput";
 import TrxList from "./pages/trx/TrxList";
 import TrxDetail from "./pages/trx/TrxDetail";
+import TrxStokAwal from "./pages/trx/TrxStokAwal";
 
 import LapSupplierHarian from "./pages/lap/LapSupplierHarian";
 import LapStokHarian from "./pages/lap/LapStokHarian";
 import LapPenjualanHarian from "./pages/lap/LapPenjualanHarian";
 
-import SetStokAwal from "./pages/set/SetStokAwal";
 import SetProduk from "./pages/set/SetProduk";
 import SetSupplier from "./pages/set/SetSupplier";
 import SetKategori from "./pages/set/SetKategori";
@@ -50,12 +50,12 @@ const App = () => {
               <Route index element={<TrxInput />} />
               <Route path="/trxlist" element={<TrxList />} />
               <Route path="/trxdetail/:id" element={<TrxDetail />} />
+              <Route path="/trxstokawal" element={<TrxStokAwal />} />
 
               <Route path="/lapstokharian" element={<LapStokHarian />} />
               <Route path="/lapsupplierharian" element={<LapSupplierHarian />} />
               <Route path="/lappenjualanharian" element={<LapPenjualanHarian />} />
 
-              <Route path="/setstokawal" element={<SetStokAwal />} />
               <Route path="/setproduk" element={<SetProduk />} />
               <Route index path="/setsupplier" element={<SetSupplier />} />
               <Route path="/setkategori" element={<SetKategori />} />

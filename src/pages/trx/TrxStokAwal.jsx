@@ -5,7 +5,7 @@ import { EditOutlined, CheckOutlined } from '@ant-design/icons';
 import { supabase } from '../../config/supabase';
 import dayjs from 'dayjs';
 
-const SetStokProduk = () => {
+const TrxStokProduk = () => {
   const currDate = new Date().toLocaleString("en-CA", {
     timeZone: "Asia/Jakarta",
     year: "numeric",
@@ -271,4 +271,4 @@ const SetStokProduk = () => {
     </>
   )
 };
-export default SetStokProduk;
+export default TrxStokProduk;

@@ -19,11 +19,15 @@ const menuItems = [
     children: [
       {
         key: '/',
-        label: 'Input',
+        label: 'Input Transaksi',
       },
       {
         key: 'trxlist',
-        label: 'Riwayat',
+        label: 'Riwayat Transaksi',
+      },
+      {
+        key: 'trxstokawal',
+        label: 'Stok Awal',
       },
     ]
   },
@@ -51,10 +55,6 @@ const menuItems = [
     key: 'setting',
     icon: <SettingOutlined />,
     children: [
-      {
-        key: 'setstokawal',
-        label: 'Stok Awal',
-      },
       {
         key: 'setproduk',
         label: 'Produk',
