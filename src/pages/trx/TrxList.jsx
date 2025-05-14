@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Space, Typography, Divider, Table, DatePicker, Input, Select, Button, Modal, Popconfirm, message } from 'antd';
-import { PrinterOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router';
+import { Space, Typography, Divider, Table, DatePicker, Input, Select, Button, Modal, Popconfirm, message, Tabs } from 'antd';
+import { EditOutlined } from '@ant-design/icons';
 import { PDFViewer, Text, View, Page, Document, StyleSheet } from '@react-pdf/renderer';
 
 import { supabase } from '../../config/supabase';
@@ -47,6 +48,8 @@ const styles = StyleSheet.create({
 });
 
 const TrxList = () => {
+  const navigate = useNavigate();
+
   const [isLoading, setIsLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
   const [modalShow, setModalShow] = useState(false);
@@ -63,11 +66,17 @@ const TrxList = () => {
   const [dataPenjualanMetodeBayar, setDataPenjualanMetodeBayar] = useState('');
   const [dataProdukPenjualan, setDataProdukPenjualan] = useState([]);
   
+  const [statusFilter, setStatusFilter] = useState(1);
   const [searchFilter, setSearchFilter] = useState('');
   const dateFormat = 'YYYY-MM-DD';
   const [dateFilter, setDateFilter] = useState(dayjs().format(dateFormat));
   const [metodeBayarFilter, setMetodeBayarFilter] = useState('');
   
+  const dataStatusFilter = [
+    { key:1, label: 'LUNAS', value: 1 },
+    { key:0, label: 'OPEN BILL', value: 0 },
+  ];
+
   const dataMetodeBayar = [
     { key:0, label: 'Semua Metode Bayar', value: '' },
     { key:1, label: 'CASH', value: 'CASH' },
@@ -80,14 +89,15 @@ const TrxList = () => {
 
   useEffect(() => {
     getDataList();
-  }, [searchFilter, dateFilter, metodeBayarFilter, dataRange.start]);
+  }, [searchFilter, dateFilter, metodeBayarFilter, statusFilter, dataRange.start]);
 
   async function getDataList() {
     setIsLoading(true)
     let query = supabase.from("penjualan")
                       .select('id,kode,tanggal,total_harga,list_produk,nominal_bayar,metode_bayar,keterangan,lunas,created_at', { count:'exact' })
-                      .ilike('keterangan', '%'+searchFilter+'%')
                       .eq('tanggal', dateFilter)
+                      .eq('lunas', statusFilter)
+                      .ilike('keterangan', '%'+searchFilter+'%')
                       .order('id', { ascending:false })
                       .range(dataRange.start, dataRange.end)
     
@@ -169,13 +179,22 @@ const TrxList = () => {
     },
     {
       title: 'Note/Pemesan',
-      dataIndex: 'keterangan',
       key: 'keterangan',
+      render: (_, record) => (
+        <>{record.keterangan ? record.keterangan : '-'}</>
+      ),
     },
     {
       title: 'List Produk',
       dataIndex: 'list_produk',
       key: 'list_produk',
+    },
+    {
+      title: 'Metode',
+      key: 'metode_bayar',
+      render: (_, record) => (
+        <>{record.lunas == 1 ? record.metode_bayar : '-'}</>
+      ),
     },
     {
       title: 'Total Pesanan',
@@ -185,29 +204,22 @@ const TrxList = () => {
         <>{record.total_harga.toLocaleString()}</>
       ),
     },
-    {
-      title: 'Pembayaran',
-      key: 'nominal_bayar',
-      align: 'right',
-      render: (_, record) => (
-        <>{record.lunas == 1 ? record.nominal_bayar.toLocaleString() : '-'}</>
-      ),
-    },
-    {
-      title: 'Kembalian',
-      key: 'kembalian',
-      align: 'right',
-      render: (_, record) => (
-        <>{record.lunas == 1 ? (record.nominal_bayar - record.total_harga).toLocaleString() : '-'}</>
-      ),
-    },
-    {
-      title: 'Metode',
-      key: 'metode_bayar',
-      render: (_, record) => (
-        <>{record.lunas == 1 ? record.metode_bayar : '-'}</>
-      ),
-    },
+    // {
+    //   title: 'Pembayaran',
+    //   key: 'nominal_bayar',
+    //   align: 'right',
+    //   render: (_, record) => (
+    //     <>{record.lunas == 1 ? record.nominal_bayar.toLocaleString() : '-'}</>
+    //   ),
+    // },
+    // {
+    //   title: 'Kembalian',
+    //   key: 'kembalian',
+    //   align: 'right',
+    //   render: (_, record) => (
+    //     <>{record.lunas == 1 ? (record.nominal_bayar - record.total_harga).toLocaleString() : '-'}</>
+    //   ),
+    // },
     {
       title: 'Waktu',
       key: 'created_at',
@@ -219,7 +231,7 @@ const TrxList = () => {
       title: 'Struk',
       key: 'struk',
       render: (_, record) => (
-        <Button onClick={() => onShowInvoice(record)} icon={<PrinterOutlined />} color="primary" variant="outlined" />
+        <Button onClick={() => navigate('/trxdetail/'+record.id)} icon={<EditOutlined />} type="primary">Detail</Button>
       ),
     },
   ];
@@ -230,6 +242,13 @@ const TrxList = () => {
       <Title level={4} style={{marginTop:10, marginBottom:-10}}>Riwayat Transaksi</Title>
       <Divider />
 
+      <Tabs 
+        defaultActiveKey="1" 
+        items={dataStatusFilter} 
+        onChange={(value) => setStatusFilter(value)} 
+        tabPosition='top'
+        style={{ marginLeft:10, marginTop:-20 }} />
+        
       <Space>
         <DatePicker 
           defaultValue={dayjs(dateFilter, dateFormat)} 

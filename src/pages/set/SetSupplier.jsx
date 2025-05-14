@@ -66,6 +66,10 @@ const SetSupplier = () => {
 
   async function onFinish(values) {
     setIsLoading(true)
+
+    const { data:{user} } = await supabase.auth.getUser()
+    const currTime = new Date()
+    
     if(id != 0) {
       const { error } = await supabase
       .from('supplier')
@@ -100,7 +104,11 @@ const SetSupplier = () => {
       } else {
         const { error } = await supabase
         .from('supplier')
-        .insert({ nama:values.nama })
+        .insert({ 
+          nama:values.nama,
+          created_by: user.email,
+          created_at: currTime,
+        })
 
         if(error) {
             messageApi.open({
@@ -169,7 +177,7 @@ const SetSupplier = () => {
 
       <Space>
         <Button onClick={() => showDetail(0)} icon={<PlusOutlined />} type="primary">Tambah</Button>
-        <Search placeholder="Cari produk" allowClear onChange={(e) => setSearchFilter(e.target.value)} />
+        <Search placeholder="Cari nama" allowClear onChange={(e) => setSearchFilter(e.target.value)} />
       </Space>
       
       <Table 

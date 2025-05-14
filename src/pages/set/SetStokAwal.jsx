@@ -105,6 +105,9 @@ const SetStokProduk = () => {
   async function onFinish(values) {
     setIsLoading(true)
     
+    const { data:{user} } = await supabase.auth.getUser()
+    const currTime = new Date()
+
     const { data:check_stok } = await supabase
                                 .from('produk_stok')
                                 .select('id')
@@ -116,6 +119,8 @@ const SetStokProduk = () => {
       .from('produk_stok')
       .update({
         qty:values.qty,
+        updated_by: user.email,
+        updated_at: currTime,
       })
       .eq('id', check_stok.id)
 
@@ -126,6 +131,8 @@ const SetStokProduk = () => {
         tanggal:dateFilter,
         produk_id:produkID,
         qty:values.qty,
+        created_by: user.email,
+        created_at: currTime,
       })
     }
 

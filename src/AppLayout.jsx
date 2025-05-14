@@ -85,16 +85,15 @@ const AppLayout = () => {
     navigate(e.key);
   };
 
-  const location = useLocation();
+  // const location = useLocation();
   useEffect(() => {
     getUser()
-
-    const currentRoute = location.pathname.replace('/', '')
-    setCurrent(currentRoute)
+    // const currentRoute = location.pathname.replace('/', '')
+    // setCurrent(currentRoute)
   }, []);
 
   async function getUser() {
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data:{user} } = await supabase.auth.getUser()
     if(user)
       setDataUser(user.email)
   }

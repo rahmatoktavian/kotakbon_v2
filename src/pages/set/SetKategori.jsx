@@ -66,6 +66,10 @@ const SetKategori = () => {
 
   async function onFinish(values) {
     setIsLoading(true)
+    
+    const { data:{user} } = await supabase.auth.getUser()
+    const currTime = new Date()
+
     if(id != 0) {
       const { error } = await supabase
       .from('kategori')
@@ -101,7 +105,11 @@ const SetKategori = () => {
       } else {  
         const { error } = await supabase
         .from('kategori')
-        .insert({ nama:values.nama })
+        .insert({ 
+          nama:values.nama,
+          created_by: user.email,
+          created_at: currTime,
+        })
 
         if(error) {
             messageApi.open({
@@ -169,7 +177,7 @@ const SetKategori = () => {
 
       <Space>
         <Button onClick={() => showDetail(0)} icon={<PlusOutlined />} type="primary">Tambah</Button>
-        <Search placeholder="Cari produk" allowClear onChange={(e) => setSearchFilter(e.target.value)} />
+        <Search placeholder="Cari nama" allowClear onChange={(e) => setSearchFilter(e.target.value)} />
       </Space>
       
       <Table 

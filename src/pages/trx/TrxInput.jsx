@@ -80,8 +80,8 @@ const TrxInput = () => {
   const [dataPesananFinish, setDataPesananFinish] = useState(false);
 
   const statusLunas = [
-    { key:0, label: 'OPEN BILL', value: 0 },
     { key:1, label: 'LUNAS', value: 1 },
+    { key:0, label: 'OPEN/PENDING BILL', value: 0 },
   ];
 
   const metodePembayaran = [
@@ -247,27 +247,29 @@ const TrxInput = () => {
     setDataPesananFinish(false)
     setIsLoading(true)
 
+    const { data:{user} } = await supabase.auth.getUser()
+    const currTime = new Date()
+
     let total_produk = 0;
     let total_hpp = 0;
     let list_produk_label = '';
-    // let list_produk_newstok = []
     dataPesanan.map((val, idx) => {
       total_produk = total_produk + val.qty
       total_hpp = total_hpp + (val.qty * val.hpp)
       list_produk_label = idx > 0 ? list_produk_label + ','+val.nama : list_produk_label + val.nama
-
-      // list_produk_newstok.push({ 
-      //   id:val.id, 
-      //   nama:val.nama,
-      //   kategori_id:val.kategori_id,
-      //   harga:val.harga,
-      //   hpp:val.hpp,
-      //   stok:(val.stok-val.qty) 
-      // })
     })
     list_produk_label = list_produk_label.substring(0, 50)
 
     //insert pesanan
+    let nominal_bayar_val = 0
+    let nominal_kembalian_val = 0
+    if(dataPesananPaymentStatus == 1 && dataPesananPaymentMethod == 'CASH') {
+      nominal_bayar_val = dataPesananTotal
+      nominal_kembalian_val = dataPesananPaymentExchange
+    } else if(dataPesananPaymentStatus == 1 && dataPesananPaymentMethod != 'CASH') {
+      nominal_bayar_val = dataPesananTotal
+    }
+    
     const insert_penjualan = [{ 
       tanggal: currDate,
       kode: dataPesananKode,
@@ -277,9 +279,11 @@ const TrxInput = () => {
       total_hpp: total_hpp,
       keterangan: dataPesananNote,
       metode_bayar: dataPesananPaymentMethod,
-      nominal_bayar: dataPesananPaymentStatus == 1 && dataPesananPaymentMethod == 'CASH' ? dataPesananPayment : dataPesananTotal,
-      nominal_kembalian: dataPesananPaymentStatus == 1 && dataPesananPaymentMethod == 'CASH' ? dataPesananPaymentExchange : 0,
+      nominal_bayar:  nominal_bayar_val,
+      nominal_kembalian: nominal_kembalian_val,
       lunas: dataPesananPaymentStatus,
+      created_by: user.email,
+      created_at: currTime,
      }]
 
     const { data:data_penjualan, error:error_penjualan } = await supabase
@@ -314,7 +318,10 @@ const TrxInput = () => {
     //remove data
     setDataPesanan([])
     setDataPesananTotal(0)
-    setDataPesananPayment(0)
+    setDataPesananPaymentStatus(1)
+    setDataPesananPaymentMethod('CASH')
+    setDataPesananPayment('')
+    setDataPesananPaymentExchange('')
     setDataPesananNote('')
 
     //close modal
@@ -380,33 +387,6 @@ const TrxInput = () => {
               style={{ marginLeft:10, marginTop:-20 }} /> */}
 
             <Search placeholder="Cari produk" allowClear onChange={(e) => setSearchFilter(e.target.value)} />
-            
-            {/* <List
-              itemLayout="horizontal"
-              dataSource={dataProduk}
-              renderItem={(item, index) => (
-                <List.Item
-                  key={index}
-                  onClick={item.disabled ? undefined : () => onPesanInsert(item)}
-                  actions={[
-                    <Button type="primary" onClick={item.disabled ? undefined : () => onPesanInsert(item)} style={{marginTop:10}} disabled={item.disabled}>
-                      {item.disabledLabel}
-                    </Button>
-                  ]}
-                >
-                  <List.Item.Meta
-                    title={item.nama}
-                    description={'Rp '+item.harga.toLocaleString()}
-                  />
-                </List.Item>
-              )}
-            /> 
-            <Pagination 
-              total={dataTotal} 
-              onChange={(page) => onTableChange(page)} 
-              showSizeChanger={false}
-              style={{ marginTop:10, float:'right' }} />
-            */}
 
             <Table 
               columns={columns} 
@@ -458,20 +438,20 @@ const TrxInput = () => {
                   value={dataPesananPaymentStatus}
                   onChange={(value) => setDataPesananPaymentStatus(value)}
                   options={statusLunas}
-                  style={{ width:200 }}
+                  style={{ width:250 }}
                 />
             </List.Item>
 
             {dataPesananPaymentStatus == 1 &&
             <List.Item>
-              <List.Item.Meta title='METODE' />
+              <List.Item.Meta title='METODE BAYAR' />
               <Select
-                  placeholder="Pilih"
-                  value={dataPesananPaymentMethod}
-                  onChange={(value) => setDataPesananPaymentMethod(value)}
-                  options={metodePembayaran}
-                  style={{ width:200 }}
-                />
+                placeholder="Pilih"
+                value={dataPesananPaymentMethod}
+                onChange={(value) => setDataPesananPaymentMethod(value)}
+                options={metodePembayaran}
+                style={{ width:250 }}
+              />
             </List.Item>
             }
 
@@ -488,7 +468,7 @@ const TrxInput = () => {
                   value={dataPesananPayment}
                   onChange={(value) => onChangeNominalBayar(value)}
                   formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  style={{ width:200 }}
+                  style={{ width:250 }}
                 />
               </List.Item>
               <List.Item>
@@ -496,10 +476,9 @@ const TrxInput = () => {
                 <InputNumber
                   value={dataPesananPayment < dataPesananTotal ? 0 : dataPesananPaymentExchange.toLocaleString()}
                   disabled={true}
-                  style={{ width:200 }}
+                  style={{ width:250 }}
                   align='right'
                 />
-                
               </List.Item>
             </>
             }
@@ -508,7 +487,7 @@ const TrxInput = () => {
               <Input
                 value={dataPesananNote}
                 onChange={(e) => setDataPesananNote(e.target.value)}
-                style={{ width:200 }} 
+                style={{ width:250 }} 
               />
             </List.Item>
           </List>

@@ -128,6 +128,10 @@ const SetProduk = () => {
 
   async function onFinish(values) {
     setIsLoading(true)
+    
+    const { data:{user} } = await supabase.auth.getUser()
+    const currTime = new Date()
+    
     if(id != 0) {
       const { error } = await supabase
       .from('produk')
@@ -137,6 +141,8 @@ const SetProduk = () => {
         nama:values.nama,
         harga:values.harga,
         hpp:values.hpp,
+        updated_by: user.email,
+        updated_at: currTime,
        })
       .eq('id',id)
 
@@ -175,6 +181,8 @@ const SetProduk = () => {
           nama:values.nama,
           harga:values.harga,
           hpp:values.hpp,
+          created_by: user.email,
+          created_at: currTime,
         })
 
         if(error) {
@@ -358,14 +366,14 @@ const SetProduk = () => {
             name="hpp"
             rules={[{ required: true }]}
           >
-            <InputNumber />
+            <InputNumber formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
           </Form.Item>
           <Form.Item
             label="Harga Jual"
             name="harga"
             rules={[{ required: true }]}
           >
-            <InputNumber />
+            <InputNumber formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
           </Form.Item>
           <Form.Item>
             <Space>
