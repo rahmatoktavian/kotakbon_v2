@@ -30,9 +30,9 @@ const LapSupplierHarian = () => {
     const { data } = await supabase.rpc("supplier_harian", { date_filter:dateFilter, nama_filter:namaFilters })
     setDataList(data)
 
-    let totalPenjualan = data ? data[0].total_harga_harian : 0;
-    let totalModal = data ? data[0].total_hpp_harian : 0;
-    let totalLaba = data ? (data[0].total_harga_harian - data[0].total_hpp_harian) : 0;
+    let totalPenjualan = data[0] ? data[0].total_harga_harian : 0;
+    let totalModal = data[0] ? data[0].total_hpp_harian : 0;
+    let totalLaba = data[0] ? (data[0].total_harga_harian - data[0].total_hpp_harian) : 0;
 
     setDataTotalPenjualan(totalPenjualan)
     setDataTotalModal(totalModal)
