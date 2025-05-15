@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Space, DatePicker, Typography, Divider, Table, Modal, Form, Button, Input, InputNumber, Select, message } from 'antd';
+import { Space, DatePicker, Typography, Divider, Table, Modal, Form, Button, Input, InputNumber, Select, message, Popconfirm } from 'antd';
 import { EditOutlined, CheckOutlined } from '@ant-design/icons';
 
 import { supabase } from '../../config/supabase';
@@ -240,7 +240,7 @@ const TrxStokProduk = () => {
             name="tanggal"
             rules={[{ required: true }]}
           >
-            <Input disabled={true} />
+            <Input disabled={true} style={{color:'red'}} />
           </Form.Item>
           <Form.Item
             label="Produk"
@@ -258,9 +258,17 @@ const TrxStokProduk = () => {
           </Form.Item>
           <Form.Item>
             <Space>
-              <Button key="save" type="primary" htmlType="submit" icon={<CheckOutlined />} loading={isLoading}>
-                Simpan
-              </Button>
+              <Popconfirm
+                title="Peringatan"
+                description={"Yakin stok untuk tanggal "+dateFilter+"?"}
+                onConfirm={() => form.submit()}
+                okText="Ya"
+                cancelText="Batal"
+              >
+                <Button key="save" type="primary" icon={<CheckOutlined />} loading={isLoading}>
+                  Simpan
+                </Button>
+              </Popconfirm>
               <Button key="back" onClick={() => setModalShow(false)}>
                 Batal
               </Button>
