@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Space, Typography, Divider, Table, DatePicker, Input } from 'antd';
+import { useNavigate } from 'react-router';
+import { Space, Typography, Divider, Table, DatePicker, Input, Button } from 'antd';
+import { UnorderedListOutlined } from '@ant-design/icons';
 
 import { supabase } from '../../config/supabase';
 import dayjs from 'dayjs';
 
 const LapSupplierHarian = () => {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [dataList, setDataList] = useState([]);
   
@@ -28,7 +31,8 @@ const LapSupplierHarian = () => {
 
     let namaFilters = namaFilter != '' ? namaFilter : null;
     const { data } = await supabase.rpc("supplier_harian", { date_filter:dateFilter, nama_filter:namaFilters })
-    setDataList(data)
+    const dataSorted = [...data].sort((a, b) => b.harga_harian - a.harga_harian);
+    setDataList(dataSorted)
 
     let totalPenjualan = data[0] ? data[0].total_harga_harian : 0;
     let totalModal = data[0] ? data[0].total_hpp_harian : 0;
@@ -69,6 +73,13 @@ const LapSupplierHarian = () => {
       align: 'right',
       render: (_, record) => (
         <>{(record.harga_harian - record.hpp_harian).toLocaleString()}</>
+      ),
+    },
+    {
+      title: 'Produk',
+      key: 'action',
+      render: (_, record) => (
+        <Button onClick={() => navigate('/lapstokharian/'+record.supplier_id)} icon={<UnorderedListOutlined />} type="primary">Produk</Button>
       ),
     },
   ];

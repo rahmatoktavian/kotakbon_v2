@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
+import { useParams } from "react-router";
 import { Space, DatePicker, Typography, Divider, Table, Modal, Form, Button, Input, InputNumber, Select, message } from 'antd';
-import { EditOutlined, CheckOutlined } from '@ant-design/icons';
+import { CheckOutlined } from '@ant-design/icons';
 
 import { supabase } from '../../config/supabase';
 import dayjs from 'dayjs';
 
 const LapStokHarian = () => {
+  let { supplier_id } = useParams();
+
   const currDate = new Date().toLocaleString("en-CA", {
     timeZone: "Asia/Jakarta",
     year: "numeric",
@@ -46,8 +49,16 @@ const LapStokHarian = () => {
 
   async function getDataList() {
     setIsLoading(true)
+
     let searchFilters = searchFilter != '' ? searchFilter : null;
-    let supplierFilters = supplierFilter != '' ? supplierFilter : null;
+
+    let supplierFilters = null
+    if(supplier_id != 0) {
+      supplierFilters = supplier_id
+    } else if(supplierFilter != '') {
+      supplierFilters = supplierFilter
+    }
+    console.log(supplierFilters)
     const { data } = await supabase.rpc("produk_stok_harian_v2", { 
         date_filter:dateFilter,
         nama_filter:searchFilters, 
@@ -88,12 +99,20 @@ const LapStokHarian = () => {
                       .select('id,nama')
                       .order('nama', { ascending:true })
     
-    const listSupplier = []
+    let listSupplier = []
+    let paramSupplier = ''
     listSupplier.push({ value:'', label:'Semua Supplier'})
-    data.map((val) => (
+    data.map((val) => {
       listSupplier.push({ value:val.id, label:val.nama})
-    ))
+
+      if(supplier_id != 0 && supplier_id == val.id) {
+        paramSupplier = val.nama
+      }
+    })
+    console.log(paramSupplier)
     setDataSupplier(listSupplier)
+    setSupplierFilter(paramSupplier)
+
     setIsLoading(false)
   }
 
@@ -233,13 +252,13 @@ const LapStokHarian = () => {
         />
         <Search placeholder="Cari produk" allowClear onChange={(e) => setSearchFilter(e.target.value)} />
         <Select
-                  showSearch
-                  optionFilterProp="label"
-                  value={supplierFilter}
-                  onChange={(value) => setSupplierFilter(value)}
-                  options={dataSupplier} 
-                  style={{ width:200 }}
-                />
+            showSearch
+            optionFilterProp="label"
+            value={supplierFilter}
+            onChange={(value) => setSupplierFilter(value)}
+            options={dataSupplier} 
+            style={{ width:200 }}
+          />
       </Space>
       
       <Title level={5} style={{ fontSize:11 }} align="right">Biaya Modal: Total Penjualan x Harga Modal</Title>

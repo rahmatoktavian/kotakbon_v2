@@ -38,16 +38,16 @@ const menuItems = [
     children: [
       {
         key: 'lapsupplierharian',
-        label: 'Rekap Supplier Harian',
+        label: 'Penjualan Supplier',
       },
       {
-        key: 'lapstokharian',
-        label: 'Rekap Stok Harian',
+        key: 'lapstokharian/0',
+        label: 'Stok Produk',
       },
-      {
-        key: 'lappenjualanharian',
-        label: 'Rekap Penjualan Harian',
-      },
+      // {
+      //   key: 'lappenjualanharian',
+      //   label: 'Penjualan Harian',
+      // },
     ],
   },
   {

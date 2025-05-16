@@ -28,6 +28,7 @@ CREATE OR REPLACE FUNCTION supplier_harian(
   nama_filter varchar
 )
 RETURNS TABLE(
+  supplier_id int,
   supplier_nama varchar,
   harga_harian bigint, 
   hpp_harian bigint,
@@ -36,7 +37,8 @@ RETURNS TABLE(
 )
 LANGUAGE sql
 AS $function$
-  SELECT supplier.nama, 
+  SELECT supplier.id, 
+          supplier.nama, 
           SUM(produk_penjualan.qty * produk_penjualan.harga) AS harga_harian, 
           SUM(produk_penjualan.qty * produk_penjualan.hpp) AS hpp_harian,
           SUM(SUM(produk_penjualan.qty * produk_penjualan.harga)) OVER() AS total_harga_harian,
@@ -47,7 +49,7 @@ AS $function$
   JOIN supplier ON produk.supplier_id = supplier.id
   WHERE penjualan.tanggal = date_filter
   AND (nama_filter IS NULL OR supplier.nama ILIKE '%' || nama_filter || '%')
-  GROUP BY supplier.nama
+  GROUP BY supplier.id, supplier.nama
   ORDER BY supplier.nama
 $function$;
 
