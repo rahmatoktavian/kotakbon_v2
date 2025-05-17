@@ -6,6 +6,14 @@ import dayjs from 'dayjs';
 import { supabase } from '../../config/supabase'
 
 const TrxDetail = () => {
+  const currTime = new Date()
+  const currDate = new Date().toLocaleString("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).slice(0, 10);
+
   let { id } = useParams();
   const navigate = useNavigate();
 
@@ -203,8 +211,6 @@ const TrxDetail = () => {
     }
 
     const { data:{user} } = await supabase.auth.getUser()
-    const currTime = new Date()
-
     await supabase
         .from('penjualan')
         .update({
@@ -253,8 +259,6 @@ const TrxDetail = () => {
     setIsLoading(true)
 
     const { data:{user} } = await supabase.auth.getUser()
-    const currTime = new Date()
-
     await supabase
           .from('penjualan')
           .update({
@@ -292,8 +296,6 @@ const TrxDetail = () => {
     setIsLoading(true)
 
     const { data:{user} } = await supabase.auth.getUser()
-    const currTime = new Date()
-
     const { error } = await supabase
           .from('penjualan')
           .update({
@@ -327,8 +329,6 @@ const TrxDetail = () => {
     setIsLoading(true)
 
     const { data:{user} } = await supabase.auth.getUser()
-    const currTime = new Date()
-
     const { error } = await supabase
           .from('penjualan')
           .update({
@@ -609,7 +609,7 @@ const TrxDetail = () => {
                       okText="Ya"
                       cancelText="Batal"
                     >
-                      <Button key="delete" color="danger" variant='outlined' icon={<DeleteOutlined />} loading={isLoading} size="large" style={{ width:50 }} />
+                      <Button key="delete" color="danger" variant='outlined' icon={<DeleteOutlined />} loading={isLoading} size="large" disabled={currDate == dataPenjualan.tanggal ? false : true} style={{ width:50 }} />
                     </Popconfirm>
                   </Space>
                 </Table.Summary.Cell>
