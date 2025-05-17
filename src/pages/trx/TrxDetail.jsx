@@ -609,7 +609,7 @@ const TrxDetail = () => {
                       okText="Ya"
                       cancelText="Batal"
                     >
-                      <Button key="delete" color="danger" variant='outlined' icon={<DeleteOutlined />} loading={isLoading} size="large" disabled={dataPenjualan.lunas == 0 ? false : true} style={{ width:50 }} />
+                      <Button key="delete" color="danger" variant='outlined' icon={<DeleteOutlined />} loading={isLoading} size="large" style={{ width:50 }} />
                     </Popconfirm>
                   </Space>
                 </Table.Summary.Cell>
