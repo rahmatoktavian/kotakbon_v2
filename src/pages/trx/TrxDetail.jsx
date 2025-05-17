@@ -589,7 +589,7 @@ const TrxDetail = () => {
                     disabled={dataPenjualan.lunas == 0 ? false : true}
                     style={{ width:210 }} 
                   />
-                  <Button key={"editnote"} type="primary" icon={<CheckOutlined />} onClick={() => onUpdateNote()} />
+                  <Button key={"editnote"} type="primary" icon={<CheckOutlined />} onClick={() => onUpdateNote()} disabled={dataPenjualan.lunas == 0 ? false : true} />
                   </Space>
                 </Table.Summary.Cell>
               </Table.Summary.Row>
