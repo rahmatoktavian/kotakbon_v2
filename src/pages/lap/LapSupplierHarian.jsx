@@ -79,7 +79,7 @@ const LapSupplierHarian = () => {
       title: 'Produk',
       key: 'action',
       render: (_, record) => (
-        <Button onClick={() => navigate('/lapstokharian/'+record.supplier_id)} icon={<UnorderedListOutlined />} type="primary">Produk</Button>
+        <Button onClick={() => navigate('/lapstokharian/', { state: {supp_id:record.supplier_id}} )} icon={<UnorderedListOutlined />} type="primary">Produk</Button>
       ),
     },
   ];

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Space, Typography, Divider, Table, DatePicker, Input, Select, Button, Modal, Popconfirm, message, Tabs } from 'antd';
-import { EditOutlined } from '@ant-design/icons';
+import { EditOutlined, PrinterOutlined } from '@ant-design/icons';
 import { PDFViewer, Text, View, Page, Document, StyleSheet } from '@react-pdf/renderer';
 
 import { supabase } from '../../config/supabase';
@@ -133,7 +133,6 @@ const TrxList = () => {
                                       .eq('penjualan_id', penjualan.id)
 
     setDataProdukPenjualan(produk_penjualan)
-
     setModalShow(true)
   }
 
@@ -231,7 +230,11 @@ const TrxList = () => {
       title: 'Struk',
       key: 'struk',
       render: (_, record) => (
-        <Button onClick={() => navigate('/trxdetail/'+record.id)} icon={<EditOutlined />} type="primary">Detail</Button>
+        <Space>
+          <Button onClick={() => navigate('/trxdetail/'+record.id)} icon={<EditOutlined />} type="primary">Detail</Button>
+          <Button onClick={() => onShowInvoice(record)} icon={<PrinterOutlined />} variant="outlined" color="primary" />
+        </Space>
+        
       ),
     },
   ];
@@ -279,34 +282,6 @@ const TrxList = () => {
           hideOnSinglePage: true,
           showSizeChanger: false,
         }}
-        // summary={dataList => {
-        //   let totalHarga = 0;
-        //   let totalBayar = 0;
-        //   let totalKembalian = 0;
-        //   dataList.forEach(({ total_harga, nominal_bayar }) => {
-        //     totalHarga += total_harga;
-        //     totalBayar += nominal_bayar;
-        //     totalKembalian += (nominal_bayar-total_harga);
-        //   });
-        //   return (
-        //     <>
-        //       <Table.Summary.Row>
-        //         <Table.Summary.Cell index={0}>
-        //           <span style={{fontWeight:'bold'}}>Total</span>
-        //         </Table.Summary.Cell>
-        //         <Table.Summary.Cell index={1} align='right'>
-        //           <span style={{fontWeight:'bold'}}>{totalHarga.toLocaleString()}</span>
-        //         </Table.Summary.Cell>
-        //         <Table.Summary.Cell index={2} align='right'>
-        //           <span style={{fontWeight:'bold'}}>{totalBayar.toLocaleString()}</span>
-        //         </Table.Summary.Cell>
-        //         <Table.Summary.Cell index={3} align='right'>
-        //           <span style={{fontWeight:'bold'}}>{totalKembalian.toLocaleString()}</span>
-        //         </Table.Summary.Cell>
-        //       </Table.Summary.Row>
-        //     </>
-        //   );
-        // }}
       />
 
       <Modal 
@@ -367,12 +342,10 @@ const TrxList = () => {
                   <Text>Rp {dataPenjualanTotalHarga.toLocaleString()}</Text>
                 </View>
               </View>
-              
-
               {dataPenjualanMetodeBayar == 'CASH' &&
               <View>
                 <View style={styles.row}>
-                  <Text>Nominal Bayar</Text>
+                  <Text>Pembayaran</Text>
                   <Text>Rp {dataPenjualanTotalBayar.toLocaleString()}</Text>
                 </View>
                 <View style={styles.row}>
@@ -382,14 +355,19 @@ const TrxList = () => {
               </View>
               }
 
-              {dataPenjualanNote != '' &&
+              <View>
+                <View style={styles.row}>
+                  <Text>Metode</Text>
+                  <Text>{dataPenjualanMetodeBayar}</Text>
+                </View>
+              </View>
               <View>
                 <View style={styles.row}>
                   <Text>Note</Text>
-                  <Text>{dataPenjualanNote}</Text>
+                  <Text>{dataPenjualanNote ? dataPenjualanNote : '-'}</Text>
                 </View>
               </View>
-              }
+              
 
             </Page>
           </Document>

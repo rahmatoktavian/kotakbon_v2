@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from "react-router";
+import { useLocation } from "react-router";
 import { Space, DatePicker, Typography, Divider, Table, Modal, Form, Button, Input, InputNumber, Select, message } from 'antd';
 import { CheckOutlined } from '@ant-design/icons';
 
@@ -7,8 +7,6 @@ import { supabase } from '../../config/supabase';
 import dayjs from 'dayjs';
 
 const LapStokHarian = () => {
-  let { supplier_id } = useParams();
-
   const currDate = new Date().toLocaleString("en-CA", {
     timeZone: "Asia/Jakarta",
     year: "numeric",
@@ -23,7 +21,9 @@ const LapStokHarian = () => {
 
   const [searchFilter, setSearchFilter] = useState('');
   const [dateFilter, setDateFilter] = useState(dayjs().format(dateFormat));
-  const [supplierFilter, setSupplierFilter] = useState('');
+  const location = useLocation();
+  const supp_id = location.state ? location.state?.supp_id : '';
+  const [supplierFilter, setSupplierFilter] = useState(supp_id);
   
   const [dataList, setDataList] = useState([]);
   const [dataSupplier, setDataSupplier] = useState([]);
@@ -51,19 +51,11 @@ const LapStokHarian = () => {
     setIsLoading(true)
 
     let searchFilters = searchFilter != '' ? searchFilter : null;
-
-    let supplierFilters = null
-    if(supplier_id != 0) {
-      supplierFilters = supplier_id
-    } else if(supplierFilter != '') {
-      supplierFilters = supplierFilter
-    }
-    console.log(supplierFilters)
     const { data } = await supabase.rpc("produk_stok_harian_v2", { 
         date_filter:dateFilter,
         nama_filter:searchFilters, 
         kategori_filter:null, 
-        supplier_filter:supplierFilters,
+        supplier_filter: supplierFilter ? supplierFilter : null,
         limit_filter: (dataRange.end - dataRange.start + 1),
         offset_filter: dataRange.start
     })
@@ -100,23 +92,17 @@ const LapStokHarian = () => {
                       .order('nama', { ascending:true })
     
     let listSupplier = []
-    let paramSupplier = ''
     listSupplier.push({ value:'', label:'Semua Supplier'})
     data.map((val) => {
       listSupplier.push({ value:val.id, label:val.nama})
-
-      if(supplier_id != 0 && supplier_id == val.id) {
-        paramSupplier = val.nama
-      }
     })
-    console.log(paramSupplier)
     setDataSupplier(listSupplier)
-    setSupplierFilter(paramSupplier)
 
     setIsLoading(false)
   }
 
-  const onTableChange = (newPagination) => {
+  const onTableChange = (newPagination, filters, sorter, extra) => {
+    // console.log(sorter)
     let startRange = (newPagination.current - 1) * newPagination.pageSize;
     let endRange = newPagination.current * newPagination.pageSize - 1;
     setDataRange({
@@ -125,26 +111,26 @@ const LapStokHarian = () => {
     });
   };
 
-  async function showDetail(produk) {
-    setIsLoading(true)
-    setModalShow(true)
+  // async function showDetail(produk) {
+  //   setIsLoading(true)
+  //   setModalShow(true)
 
-    form.resetFields()
-    setProdukID(produk.id)
+  //   form.resetFields()
+  //   setProdukID(produk.id)
     
-    const { data } = await supabase.from("produk_stok")
-                      .select('qty')
-                      .eq('tanggal', dateFilter)
-                      .eq('produk_id', produk.id)
-                      .single()
+  //   const { data } = await supabase.from("produk_stok")
+  //                     .select('qty')
+  //                     .eq('tanggal', dateFilter)
+  //                     .eq('produk_id', produk.id)
+  //                     .single()
 
-    form.setFieldsValue({
-      produk: produk.nama,
-      qty:data ? data.qty : 0,
-    });
+  //   form.setFieldsValue({
+  //     produk: produk.nama,
+  //     qty:data ? data.qty : 0,
+  //   });
 
-    setIsLoading(false)
-  }
+  //   setIsLoading(false)
+  // }
 
   async function onFinish(values) {
     setIsLoading(true)
@@ -188,6 +174,7 @@ const LapStokHarian = () => {
       title: 'Produk',
       dataIndex: 'nama',
       key: 'nama',
+      // sorter: true,
     },
     {
       title: 'Supplier',
@@ -202,6 +189,7 @@ const LapStokHarian = () => {
       render: (_, record) => (
         <>{record.produk_stok_qty ? record.produk_stok_qty : '-'}</>
       ),
+      // sorter: true,
     },
     {
       title: 'Total Penjualan',
@@ -210,6 +198,7 @@ const LapStokHarian = () => {
       render: (_, record) => (
         <>{record.produk_penjualan_qty ? record.produk_penjualan_qty : '-'}</>
       ),
+      // sorter: true,
     },
     {
       title: 'Stok Akhir',
@@ -218,6 +207,7 @@ const LapStokHarian = () => {
       render: (_, record) => (
         <>{record.produk_stok_qty ? (record.produk_stok_qty - record.produk_penjualan_qty) : '-'}</>
       ),
+      // sorter: true,
     },
     {
       title: 'Harga Modal',

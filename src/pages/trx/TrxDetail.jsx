@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from "react-router";
 import { Space, Typography, Divider, Table, Modal, Form, Button, Select, Popconfirm, message, Input, InputNumber } from 'antd';
-import { ArrowLeftOutlined, PlusOutlined, CheckOutlined, DeleteOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, PlusOutlined, CheckOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { supabase } from '../../config/supabase'
 
@@ -15,7 +15,7 @@ const TrxDetail = () => {
 
   const [dataPenjualan, setDataPenjualan] = useState([]);
   const [dataProdukPenjualan, setDataProdukPenjualan] = useState([]);
-  const [dataProdukPenjualanID, setDataProdukPenjualanID] = useState([]);
+  const [dataProdukPenjualanListID, setDataProdukPenjualanListID] = useState([]);
   const [dataProduk, setDataProduk] = useState([]);
   const [dataSelectProduk, setDataSelectProduk] = useState(0);
 
@@ -28,7 +28,7 @@ const TrxDetail = () => {
   const [dataPenjualanUpdatedBy, setDataPenjualanUpdatedBy] = useState('');
   const [dataPenjualanUpdatedAt, setDataPenjualanUpdatedAt] = useState('');
   
-
+  const [dataProdukPenjualanID, setDataProdukPenjualanID] = useState(0);
   const [modalShow, setModalShow] = useState(false);
   
   const { Title } = Typography;
@@ -70,11 +70,12 @@ const TrxDetail = () => {
                         
     const produkList = []
     produk && produk.map((val) => {
-      if(val.produk_stok_qty > 0) {
+      let produkStok = val.produk_stok_qty - val.produk_penjualan_qty
+      if(val.produk_stok_qty) {
         produkList.push({ 
                           value:val.id, 
-                          label:val.nama+' - Rp '+val.harga.toLocaleString()+' (Stok: '+val.produk_stok_qty+')',
-                          stok:val.produk_stok_qty, 
+                          label:val.nama+' - Rp '+val.harga.toLocaleString()+' (Stok: '+produkStok+')',
+                          stok:produkStok, 
                           harga:val.harga, 
                           hpp:val.hpp, 
                         })
@@ -88,7 +89,7 @@ const TrxDetail = () => {
   async function getDataProdukPenjualan(is_update) {
     setIsLoading(true)
     const { data } = await supabase.from("produk_penjualan")
-                                      .select('id,harga,hpp,qty,produk_id,produk(nama)')
+                                      .select('id,produk_id,harga,hpp,qty,produk_id,produk(nama)')
                                       .eq('penjualan_id', id)
                                       .order('id', { ascending:false })
     setDataProdukPenjualan(data)
@@ -106,7 +107,7 @@ const TrxDetail = () => {
       list_produk_penjualan.push(val.produk_id)
     })
     list_produk_label = list_produk_label.substring(0, 50)
-    setDataProdukPenjualanID(list_produk_penjualan)
+    setDataProdukPenjualanListID(list_produk_penjualan)
     setDataPenjualanTotal(total_harga)
 
     if(is_update == 1) {
@@ -125,74 +126,120 @@ const TrxDetail = () => {
   }
 
   async function onFinishProduk(values) {
-    if (dataProdukPenjualanID.includes(values.produk)) {
-      messageApi.open({
-        type: 'error',
-        content: 'Produk sudah ada',
-      });
+    setIsLoading(true)
 
-    } else if(values.jumlah > dataSelectProduk.stok) {
-      messageApi.open({
-        type: 'error',
-        content: 'Jumlah melebihi stok ('+dataSelectProduk.stok+')',
-      });
+    //insert
+    if(dataProdukPenjualanID == 0) {
 
-    } else {
-      setIsLoading(true)
-
-      const { data:{user} } = await supabase.auth.getUser()
-      const currTime = new Date()
-
-      await supabase
-          .from('penjualan')
-          .update({
-            updated_by: user.email,
-            updated_at: currTime,
-          })
-          .eq('id',id)
-      setDataPenjualanUpdatedBy(user.email)
-      setDataPenjualanUpdatedAt(currTime)
-
-      const { error } = await supabase
-      .from('produk_penjualan')
-      .insert({ 
-        penjualan_id: dataPenjualan.id,
-        harga: dataSelectProduk.harga,
-        hpp: dataSelectProduk.hpp,
-        produk_id: values.produk,
-        qty: values.jumlah,
-      })
-      
-      if(error) {
+      //check qty under stok
+      if(values.jumlah > dataSelectProduk.stok) {
         messageApi.open({
           type: 'error',
-          content: error.message,
+          content: 'Jumlah melebihi stok ('+dataSelectProduk.stok+')',
         });
-      } else {
+      
+      //check produk exist
+      } else if (dataProdukPenjualanListID.includes(values.produk)) {
         messageApi.open({
-          type: 'success',
-          content: 'Berhasil simpan data',
+          type: 'error',
+          content: 'Produk sudah ada',
         });
+
+      //do insert
+      } else {
+        const { error } = await supabase
+          .from('produk_penjualan')
+          .insert({ 
+            penjualan_id: dataPenjualan.id,
+            harga: dataSelectProduk.harga,
+            hpp: dataSelectProduk.hpp,
+            produk_id: values.produk,
+            qty: values.jumlah,
+          })
+        
+        if(error) {
+          messageApi.open({
+            type: 'error',
+            content: error.message,
+          });
+        } else {
+          messageApi.open({
+            type: 'success',
+            content: 'Berhasil simpan data',
+          });
+        }
       }
 
-      getDataProdukPenjualan(1)
-      form.setFieldsValue({
-        produk: null,
-        jumlah: null
-      })
-      setModalShow(false)
-      setIsLoading(false)
+    //update
+    } else {
+      //check qty under stok
+      if((values.jumlah - dataSelectProduk.qtyOld) > dataSelectProduk.stok) {
+        messageApi.open({
+          type: 'error',
+          content: 'Jumlah melebihi stok ('+dataSelectProduk.stok+')',
+        });
+
+      //do update
+      } else {
+        const { error } = await supabase
+          .from('produk_penjualan')
+          .update({ 
+            qty: values.jumlah,
+          })
+          .eq('id', dataProdukPenjualanID)
+          
+        if(error) {
+          messageApi.open({
+            type: 'error',
+            content: error.message,
+          });
+        } else {
+          messageApi.open({
+            type: 'success',
+            content: 'Berhasil simpan data',
+          });
+        }
+      }
     }
+
+    const { data:{user} } = await supabase.auth.getUser()
+    const currTime = new Date()
+
+    await supabase
+        .from('penjualan')
+        .update({
+          updated_by: user.email,
+          updated_at: currTime,
+        })
+        .eq('id',id)
+
+    setDataPenjualanUpdatedBy(user.email)
+    setDataPenjualanUpdatedAt(currTime)
+
+    getDataPenjualan()
+    getDataProdukPenjualan(1)
+    form.setFieldsValue({
+      produk: null,
+      jumlah: null
+    })
+
+    setDataProdukPenjualanID(0)
+    setModalShow(false)
+    setIsLoading(false)
   }
 
   function onSelectProduk(value) {
-    form.setFieldsValue({ produk:value })
+    form.setFieldsValue({ 
+      produk:value,
+      jumlah:1,
+    })
     
     let selectProduk = []
     dataProduk.map((val) => {
       if(val.value == value) {
         selectProduk.push({
           stok: val.stok,
+          qtyOld : 1,
           harga: val.harga,
           hpp: val.hpp,
         })
@@ -215,6 +262,7 @@ const TrxDetail = () => {
             updated_at: currTime,
           })
           .eq('id',id)
+
     setDataPenjualanUpdatedBy(user.email)
     setDataPenjualanUpdatedAt(currTime)
 
@@ -273,6 +321,36 @@ const TrxDetail = () => {
 
     setIsLoading(false)
     navigate('/trxlist')
+  }
+
+  async function onUpdateNote() {
+    setIsLoading(true)
+
+    const { data:{user} } = await supabase.auth.getUser()
+    const currTime = new Date()
+
+    const { error } = await supabase
+          .from('penjualan')
+          .update({
+            keterangan: dataPenjualanNote,
+            updated_by: user.email,
+            updated_at: currTime,
+          })
+          .eq('id',id)
+    
+    if(error) {
+        messageApi.open({
+          type: 'error',
+          content: error.message,
+        });
+    } else {
+        messageApi.open({
+          type: 'success',
+          content: 'Berhasil simpan data',
+        });
+    }
+
+    setIsLoading(false)
   }
 
   async function onDeletePenjualan() {
@@ -341,17 +419,18 @@ const TrxDetail = () => {
       key: 'action',
       align: 'right',
       render: (_, record) => (
-        <Popconfirm
-          title="Peringatan"
-          description="Yakin menghapus data?"
-          onConfirm={() => onDeleteProduk(record.id)}
-          okText="Ya"
-          cancelText="Batal"
-        >
-          <Button key="delete" color="danger" variant='outlined' icon={<DeleteOutlined />} disabled={dataPenjualan.lunas == 0 ? false : true}>
-            Hapus
-          </Button>
-        </Popconfirm>
+        <Space>
+            <Button key={"edit"+record.id} type="primary" icon={<EditOutlined />} disabled={dataPenjualan.lunas == 0 ? false : true} onClick={() => showForm(record)}>Edit</Button>
+            <Popconfirm
+              title="Peringatan"
+              description="Yakin menghapus data?"
+              onConfirm={() => onDeleteProduk(record.id)}
+              okText="Ya"
+              cancelText="Batal"
+            >
+            <Button key={"delete"+record.id} color="danger" variant='outlined' icon={<DeleteOutlined />} disabled={dataPenjualan.lunas == 0 ? false : true} />
+            </Popconfirm>
+          </Space>
       ),
     },
   ];
@@ -362,6 +441,38 @@ const TrxDetail = () => {
     setDataPenjualanKembalian(nominal_kembalian)
   }
 
+  function showForm(penjualan_produk) {
+    form.setFieldsValue({ 
+      produk: penjualan_produk.produk_id,
+      jumlah: penjualan_produk.qty,
+    })
+    
+    let selectProduk = []
+    dataProduk.map((val) => {
+      if(val.value == penjualan_produk.produk_id) {
+        selectProduk.push({
+          stok: val.stok,
+          qtyOld : penjualan_produk.qty,
+          harga: val.harga,
+          hpp: val.hpp,
+        })
+      }
+    })
+    console.log(selectProduk)
+    setDataProdukPenjualanID(penjualan_produk.id)
+    setDataSelectProduk(selectProduk[0])
+    setModalShow(true)
+  }
+
+  function hideForm() {
+    setDataProdukPenjualanID(0)
+    form.setFieldsValue({
+      produk: null,
+      jumlah: null
+    })
+    setModalShow(false)
+  }
+
   return (
     <>
       {contextHolder}
@@ -369,7 +480,7 @@ const TrxDetail = () => {
       <Divider />
 
       <Space>
-        <Button onClick={() => navigate('/trxlist')} icon={<ArrowLeftOutlined />} variant="outlined" color="primary">Kembali</Button>
+        <Button onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />} variant="outlined" color="primary">Kembali</Button>
         {dataPenjualan.lunas == 0 && <Button onClick={() => setModalShow(true)} icon={<PlusOutlined />} type="primary">Tambah</Button>}
       </Space>
       
@@ -395,7 +506,7 @@ const TrxDetail = () => {
                   </span>
                 </Table.Summary.Cell>
                 <Table.Summary.Cell index={2} align="right">
-                  <span style={{fontWeight:'bold'}}>METODE BAYAR</span>
+                  <span style={{fontWeight:'bold'}}>Metode</span>
                 </Table.Summary.Cell>
                 <Table.Summary.Cell index={3} align="right">
                   <Select
@@ -422,7 +533,7 @@ const TrxDetail = () => {
                   }
                 </Table.Summary.Cell>
                 <Table.Summary.Cell index={2} align="right">
-                  <span style={{fontWeight:'bold'}}>TOTAL PESANAN</span>
+                  <span style={{fontWeight:'bold'}}>Total Pesanan</span>
                 </Table.Summary.Cell>
                 <Table.Summary.Cell index={3} align="right">
                   <span style={{fontWeight:'bold'}}>{dataPenjualanTotal.toLocaleString()}</span>
@@ -435,7 +546,7 @@ const TrxDetail = () => {
                 <Table.Summary.Cell index={0}></Table.Summary.Cell>
                 <Table.Summary.Cell index={1}></Table.Summary.Cell>
                 <Table.Summary.Cell index={2} align="right">
-                  <span style={{fontWeight:'bold'}}>NOMINAL BAYAR</span>
+                  <span style={{fontWeight:'bold'}}>Pembayaran</span>
                 </Table.Summary.Cell>
                 <Table.Summary.Cell index={3} align="right">
                   <InputNumber
@@ -451,7 +562,7 @@ const TrxDetail = () => {
                 <Table.Summary.Cell index={0}></Table.Summary.Cell>
                 <Table.Summary.Cell index={1}></Table.Summary.Cell>
                 <Table.Summary.Cell index={2} align="right">
-                  <span style={{fontWeight:'bold'}}>KEMBALIAN</span>
+                  <span style={{fontWeight:'bold'}}>Kembalian</span>
                 </Table.Summary.Cell>
                 <Table.Summary.Cell index={3} align="right">
                   <InputNumber
@@ -468,15 +579,18 @@ const TrxDetail = () => {
                 <Table.Summary.Cell index={0}></Table.Summary.Cell>
                 <Table.Summary.Cell index={1}></Table.Summary.Cell>
                 <Table.Summary.Cell index={2} align="right">
-                  <span style={{fontWeight:'bold'}}>NOTE / PEMESAN</span>
+                  <span style={{fontWeight:'bold'}}>Note/Pemesan</span>
                 </Table.Summary.Cell>
                 <Table.Summary.Cell index={3} align="right">
+                  <Space>
                   <Input
                     value={dataPenjualanNote}
                     onChange={(e) => setDataPenjualanNote(e.target.value)}
                     disabled={dataPenjualan.lunas == 0 ? false : true}
-                    style={{ width:250 }} 
+                    style={{ width:210 }} 
                   />
+                  <Button key={"editnote"} type="primary" icon={<CheckOutlined />} onClick={() => onUpdateNote()} />
+                  </Space>
                 </Table.Summary.Cell>
               </Table.Summary.Row>
               <Table.Summary.Row>
@@ -485,8 +599,8 @@ const TrxDetail = () => {
                 <Table.Summary.Cell index={2}></Table.Summary.Cell>
                 <Table.Summary.Cell index={3} align="right">
                   <Space>
-                    <Button key="save" type="primary" icon={<CheckOutlined />} loading={isLoading} size="large" onClick={() => onFinishPenjualan()} disabled={(dataPenjualan.lunas == 0 && dataPenjualanPembayaran >= dataPenjualanTotal) ? false : true} style={{ width:200 }}>
-                      Lunas
+                    <Button key="save" type="primary" icon={<CheckOutlined />} loading={isLoading} size="large" onClick={() => onFinishPenjualan()} disabled={(dataPenjualan.lunas == 0 && (dataPenjualanPembayaran >= dataPenjualanTotal || dataPenjualanMetode != 'CASH')) ? false : true} style={{ width:200 }}>
+                      Set Lunas
                     </Button>
                     <Popconfirm
                       title="Peringatan"
@@ -508,8 +622,9 @@ const TrxDetail = () => {
       <Modal 
         title="Data" 
         open={modalShow}
-        onCancel={() => setModalShow(false)}
+        onCancel={() => hideForm()}
         footer={[]}
+        closeIcon={[]}
       >
         <Form
           name="basic"
@@ -529,6 +644,7 @@ const TrxDetail = () => {
               placeholder="Pilih"
               onChange={(value) => onSelectProduk(value)}
               options={dataProduk}
+              disabled={dataProdukPenjualanID ? true : false}
             />
           </Form.Item>
           <Form.Item

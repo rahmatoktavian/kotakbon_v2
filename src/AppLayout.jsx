@@ -41,7 +41,7 @@ const menuItems = [
         label: 'Penjualan Supplier',
       },
       {
-        key: 'lapstokharian/0',
+        key: 'lapstokharian',
         label: 'Stok Produk',
       },
       // {

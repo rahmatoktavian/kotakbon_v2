@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Col, Row, Table, Spin, Modal, List, Typography, Divider, Form, Button, Input, Select, Tabs, message, InputNumber, Pagination } from 'antd';
+import { Col, Row, Table, Spin, Modal, List, Typography, Divider, Form, Button, Input, Select, message, InputNumber, Radio } from 'antd';
 import { PlusOutlined, MinusOutlined, CheckOutlined, } from '@ant-design/icons';
 import { PDFViewer, Text, View, Page, Document, StyleSheet } from '@react-pdf/renderer';
 
@@ -81,7 +81,7 @@ const TrxInput = () => {
 
   const statusLunas = [
     { key:1, label: 'LUNAS', value: 1 },
-    { key:0, label: 'OPEN/PENDING BILL', value: 0 },
+    { key:0, label: 'OPEN BILL', value: 0 },
   ];
 
   const metodePembayaran = [
@@ -432,19 +432,21 @@ const TrxInput = () => {
           <Divider />
           <List itemLayout="horizontal">
             <List.Item>
-              <List.Item.Meta title='STATUS' />
-              <Select
-                  placeholder="Pilih"
-                  value={dataPesananPaymentStatus}
-                  onChange={(value) => setDataPesananPaymentStatus(value)}
+              <List.Item.Meta title='Status' />
+                <Radio.Group
+                  block
                   options={statusLunas}
+                  value={dataPesananPaymentStatus}
+                  onChange={(event) => setDataPesananPaymentStatus(event.target.value)}
+                  optionType="button"
+                  buttonStyle="solid"
                   style={{ width:250 }}
                 />
             </List.Item>
 
             {dataPesananPaymentStatus == 1 &&
             <List.Item>
-              <List.Item.Meta title='METODE BAYAR' />
+              <List.Item.Meta title='Metode' />
               <Select
                 placeholder="Pilih"
                 value={dataPesananPaymentMethod}
@@ -456,14 +458,14 @@ const TrxInput = () => {
             }
 
             <List.Item>
-              <List.Item.Meta title='TOTAL PESANAN' />
+              <List.Item.Meta title='Total Pesanan' />
               <Title level={5}>{'Rp '+dataPesananTotal.toLocaleString()}</Title>
             </List.Item>
 
             {(dataPesananPaymentStatus == 1 && dataPesananPaymentMethod == 'CASH') &&
             <>
               <List.Item>
-                <List.Item.Meta title='NOMINAL BAYAR' />
+                <List.Item.Meta title='Pembayaran' />
                 <InputNumber
                   value={dataPesananPayment}
                   onChange={(value) => onChangeNominalBayar(value)}
@@ -472,7 +474,7 @@ const TrxInput = () => {
                 />
               </List.Item>
               <List.Item>
-                <List.Item.Meta title='KEMBALIAN' />
+                <List.Item.Meta title='Kembalian' />
                 <InputNumber
                   value={dataPesananPayment < dataPesananTotal ? 0 : dataPesananPaymentExchange.toLocaleString()}
                   disabled={true}
@@ -483,7 +485,7 @@ const TrxInput = () => {
             </>
             }
             <List.Item>
-              <List.Item.Meta title='NOTE / PEMESAN' />
+              <List.Item.Meta title='Note/Pemesan' />
               <Input
                 value={dataPesananNote}
                 onChange={(e) => setDataPesananNote(e.target.value)}

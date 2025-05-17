@@ -52,7 +52,7 @@ const App = () => {
               <Route path="/trxdetail/:id" element={<TrxDetail />} />
               <Route path="/trxstokawal" element={<TrxStokAwal />} />
 
-              <Route path="/lapstokharian/:supplier_id" element={<LapStokHarian />} />
+              <Route path="/lapstokharian" element={<LapStokHarian />} />
               <Route path="/lapsupplierharian" element={<LapSupplierHarian />} />
               <Route path="/lappenjualanharian" element={<LapPenjualanHarian />} />
 
