@@ -93,6 +93,13 @@ const TrxList = () => {
 
   async function getDataList() {
     setIsLoading(true)
+    if(searchFilter != '') {
+      setDataRange({
+        start:0,
+        end:9,
+      });
+    }
+    
     let query = supabase.from("penjualan")
                       .select('id,kode,tanggal,total_harga,list_produk,nominal_bayar,metode_bayar,keterangan,lunas,created_at', { count:'exact' })
                       .eq('tanggal', dateFilter)

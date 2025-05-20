@@ -49,7 +49,13 @@ const LapStokHarian = () => {
 
   async function getDataList() {
     setIsLoading(true)
-
+    if(searchFilter != '') {
+      setDataRange({
+        start:0,
+        end:9,
+      });
+    }
+    
     let searchFilters = searchFilter != '' ? searchFilter : null;
     const { data } = await supabase.rpc("produk_stok_harian_v2", { 
         date_filter:dateFilter,

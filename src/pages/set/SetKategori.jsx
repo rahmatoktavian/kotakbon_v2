@@ -25,6 +25,13 @@ const SetKategori = () => {
 
   async function getDataList() {
     setIsLoading(true)
+    if(searchFilter != '') {
+      setDataRange({
+        start:0,
+        end:9,
+      });
+    }
+    
     const { data,count } = await supabase.from("kategori")
                       .select('id,nama', { count:'exact' })
                       .ilike('nama', '%'+searchFilter+'%')

@@ -25,6 +25,13 @@ const SetSupplier = () => {
 
   async function getDataList() {
     setIsLoading(true)
+    if(searchFilter != '') {
+      setDataRange({
+        start:0,
+        end:9,
+      });
+    }
+
     const { data,count } = await supabase.from("supplier")
                       .select('id,nama,rek_bank,rek_nomor,rek_nama', { count:'exact' })
                       .ilike('nama', '%'+searchFilter+'%')
@@ -54,11 +61,16 @@ const SetSupplier = () => {
 
     if(id != 0) {
       const { data } = await supabase.from("supplier")
-                        .select('id,nama')
+                        .select('id,nama,rek_bank,rek_nomor,rek_nama')
                         .eq('id',id)
                         .single()
                         
-      form.setFieldsValue({ nama:data.nama });
+      form.setFieldsValue({ 
+        nama:data.nama,
+        rek_bank:data.rek_bank,
+        rek_nomor:data.rek_nomor,
+        rek_nama:data.rek_nama,
+      });
     }
 
     setIsLoading(false)
@@ -73,7 +85,12 @@ const SetSupplier = () => {
     if(id != 0) {
       const { error } = await supabase
       .from('supplier')
-      .update({ nama:values.nama })
+      .update({ 
+        nama:values.nama,
+        rek_bank:values.rek_bank,
+        rek_nomor:values.rek_nomor,
+        rek_nama:values.rek_nama,
+      })
       .eq('id',id)
 
       if(error) {
@@ -106,6 +123,9 @@ const SetSupplier = () => {
         .from('supplier')
         .insert({ 
           nama:values.nama,
+          rek_bank:values.rek_bank,
+          rek_nomor:values.rek_nomor,
+          rek_nama:values.rek_nama,
           created_by: user.email,
           created_at: currTime,
         })
@@ -217,6 +237,27 @@ const SetSupplier = () => {
           <Form.Item
             label="Nama"
             name="nama"
+            rules={[{ required: true }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            label="Bank"
+            name="rek_bank"
+            rules={[{ required: true }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            label="Nomor Rekening"
+            name="rek_nomor"
+            rules={[{ required: true }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            label="Nama Rekening"
+            name="rek_nama"
             rules={[{ required: true }]}
           >
             <Input />

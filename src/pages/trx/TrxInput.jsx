@@ -100,6 +100,13 @@ const TrxInput = () => {
 
   async function getProdukList() {
     setIsLoading(true)
+    if(searchFilter != '') {
+      setDataRange({
+        start:0,
+        end:9,
+      });
+    }
+    
     let searchFilters = searchFilter != '' ? searchFilter : null;
     let kategoriFilters = kategoriFilter != '' ? kategoriFilter : null;
     const { data } = await supabase.rpc("produk_stok_harian_v2", { 

@@ -31,6 +31,13 @@ const SetProduk = () => {
 
   async function getDataList() {
     setIsLoading(true)
+    if(searchFilter != '') {
+      setDataRange({
+        start:0,
+        end:9,
+      });
+    }
+    
     let query = supabase.from("produk")
                       .select('id,nama,harga,hpp,kategori(nama),supplier(nama)', { count:'exact' })
                       .ilike('nama', '%'+searchFilter+'%')

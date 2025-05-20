@@ -39,6 +39,13 @@ const TrxStokProduk = () => {
 
   async function getDataList() {
     setIsLoading(true)
+    if(searchFilter != '') {
+      setDataRange({
+        start:0,
+        end:9,
+      });
+    }
+    
     let query = supabase.from("produk")
                     .select('id,nama,harga,supplier(nama),produk_stok(qty)', { count:'exact' })
                     .eq('produk_stok.tanggal', dateFilter)
