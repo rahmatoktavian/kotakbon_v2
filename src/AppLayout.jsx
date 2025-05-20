@@ -147,7 +147,7 @@ const AppLayout = () => {
         </Row>
       </Header>
       <Layout>
-        <Sider theme="light" collapsible={true} defaultCollapsed={true}>
+        <Sider theme="light" collapsible={true} defaultCollapsed={false}>
           <Menu mode="inline" items={menuItems} onClick={onClick} selectedKeys={[current]} />
         </Sider>
         <Content style={{backgroundColor:'#fff',marginLeft:3, padding:10 }}><Outlet /></Content>
