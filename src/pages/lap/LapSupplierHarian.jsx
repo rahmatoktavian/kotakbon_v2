@@ -122,13 +122,14 @@ const LapSupplierHarian = () => {
                 <Table.Summary.Cell index={0}>
                   <span style={{fontWeight:'bold'}}>Total</span>
                 </Table.Summary.Cell>
-                <Table.Summary.Cell index={1} align="right">
+                <Table.Summary.Cell index={1}></Table.Summary.Cell>
+                <Table.Summary.Cell index={2} align="right">
                   <span style={{fontWeight:'bold'}}>{dataTotalPenjualan.toLocaleString()}</span>
                 </Table.Summary.Cell>
-                <Table.Summary.Cell index={2} align="right">
+                <Table.Summary.Cell index={3} align="right">
                   <span style={{fontWeight:'bold'}}>{dataTotalModal.toLocaleString()}</span>
                 </Table.Summary.Cell>
-                <Table.Summary.Cell index={3} align="right">
+                <Table.Summary.Cell index={4} align="right">
                   <span style={{fontWeight:'bold'}}>{dataTotalLaba.toLocaleString()}</span>
                 </Table.Summary.Cell>
               </Table.Summary.Row>
