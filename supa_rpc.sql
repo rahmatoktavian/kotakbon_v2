@@ -30,6 +30,9 @@ CREATE OR REPLACE FUNCTION supplier_harian(
 RETURNS TABLE(
   supplier_id int,
   supplier_nama varchar,
+  rek_bank varchar,
+  rek_nomor varchar,
+  rek_nama varchar,
   harga_harian bigint, 
   hpp_harian bigint,
   total_harga_harian bigint,
@@ -39,6 +42,9 @@ LANGUAGE sql
 AS $function$
   SELECT supplier.id, 
           supplier.nama, 
+          supplier.rek_bank,
+          supplier.rek_nomor,
+          supplier.rek_nama,
           SUM(produk_penjualan.qty * produk_penjualan.harga) AS harga_harian, 
           SUM(produk_penjualan.qty * produk_penjualan.hpp) AS hpp_harian,
           SUM(SUM(produk_penjualan.qty * produk_penjualan.harga)) OVER() AS total_harga_harian,

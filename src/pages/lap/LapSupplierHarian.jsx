@@ -52,6 +52,13 @@ const LapSupplierHarian = () => {
       key: 'supplier_nama',
     },
     {
+      title: 'Rekening',
+      key: 'rekening',
+      render: (_, record) => (
+        <span>{record.rek_bank+' '+record.rek_nomor}</span>
+      ),
+    },
+    {
       title: 'Total Penjualan',
       dataIndex: 'harga_harian',
       align: 'right',

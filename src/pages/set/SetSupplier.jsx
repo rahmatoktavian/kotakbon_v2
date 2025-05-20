@@ -26,7 +26,7 @@ const SetSupplier = () => {
   async function getDataList() {
     setIsLoading(true)
     const { data,count } = await supabase.from("supplier")
-                      .select('id,nama', { count:'exact' })
+                      .select('id,nama,rek_bank,rek_nomor,rek_nama', { count:'exact' })
                       .ilike('nama', '%'+searchFilter+'%')
                       .order('nama', { ascending:true })
                       .range(dataRange.start, dataRange.end)
@@ -159,6 +159,13 @@ const SetSupplier = () => {
       title: 'Nama',
       dataIndex: 'nama',
       key: 'nama',
+    },
+    {
+      title: 'Rekening',
+      key: 'rekening',
+      render: (_, record) => (
+        <span>{record.rek_bank+' '+record.rek_nomor}</span>
+      ),
     },
     {
       title: 'Action',
