@@ -19,11 +19,15 @@ const LapStokHarian = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [isLoading, setIsLoading] = useState(false);
 
-  const [searchFilter, setSearchFilter] = useState('');
-  const [dateFilter, setDateFilter] = useState(dayjs().format(dateFormat));
   const location = useLocation();
-  const supp_id = location.state ? location.state?.supp_id : '';
-  const [supplierFilter, setSupplierFilter] = useState(supp_id);
+
+  const [searchFilter, setSearchFilter] = useState('');
+  
+  const date_param = location.state ? dayjs(location.state?.date_param).format(dateFormat) : dayjs().format(dateFormat);
+  const [dateFilter, setDateFilter] = useState(date_param);
+  
+  const supplier_param = location.state ? location.state?.supplier_param : '';
+  const [supplierFilter, setSupplierFilter] = useState(supplier_param);
   
   const [dataList, setDataList] = useState([]);
   const [dataSupplier, setDataSupplier] = useState([]);
