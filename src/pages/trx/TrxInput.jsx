@@ -46,14 +46,13 @@ const styles = StyleSheet.create({
 });
 
 const TrxInput = () => {
-  // const currDate = new Date().toISOString().slice(0, 10);
   const currDate = new Date().toLocaleString("en-CA", {
     timeZone: "Asia/Jakarta",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
   }).slice(0, 10);
-
+  
   const dataPesananKode = Math.floor(Math.random() * 999999);
 
   const [form] = Form.useForm();
@@ -103,7 +102,7 @@ const TrxInput = () => {
     if(searchFilter != '') {
       setDataRange({
         start:0,
-        end:9,
+        end:25,
       });
     }
     
@@ -119,43 +118,44 @@ const TrxInput = () => {
         })
 
     const newData = []
+    let rowTotal = data ? data[0].full_count : 0;
     data && data.map((val) => {
       let produkStokQty = val.produk_stok_qty ? val.produk_stok_qty : 0;
       let produkPenjualanQty = val.produk_penjualan_qty ? val.produk_penjualan_qty : 0;
       let produkStok = produkStokQty - produkPenjualanQty
-
-      let disabledProduk = false
-      let disabledLabel = 'Pilih'
+      
       if(produkStok > 0) {
+        let disabledProduk = false
+        let disabledLabel = 'Pilih'
+        if(produkStok > 0) {
 
-        dataPesanan.length > 0 && dataPesanan.map((pesanan) => {
-          if(pesanan.id == val.id) {
-            disabledProduk = true
-            disabledLabel = 'Terpilih'
-          }
+          dataPesanan.length > 0 && dataPesanan.map((pesanan) => {
+            if(pesanan.id == val.id) {
+              disabledProduk = true
+              disabledLabel = 'Terpilih'
+            }
+          })
+          
+        } else {
+          disabledProduk = true
+          disabledLabel = 'Stok Kosong'
+        }
+
+        newData.push({ 
+          id:val.id, 
+          supplier_nama: val.supplier_nama,
+          kategori_id:val.kategori_id,
+          nama:val.nama,
+          harga:val.harga,
+          hpp:val.hpp,
+          stok: produkStok,
+          disabled:disabledProduk,
+          disabledLabel: disabledLabel,
         })
-        
-      } else {
-        disabledProduk = true
-        disabledLabel = 'Stok Kosong'
       }
-
-      newData.push({ 
-        id:val.id, 
-        supplier_nama: val.supplier_nama,
-        kategori_id:val.kategori_id,
-        nama:val.nama,
-        harga:val.harga,
-        hpp:val.hpp,
-        stok: produkStok,
-        disabled:disabledProduk,
-        disabledLabel: disabledLabel,
-      })
     })
     
     setDataProduk(newData)
-
-    let rowTotal = data ? data[0].full_count : 0;
     setDataTotal(rowTotal)
     
     setIsLoading(false)
@@ -402,11 +402,12 @@ const TrxInput = () => {
               style={{marginTop:10}} 
               loading={isLoading}
               onChange={onTableChange}
-              pagination={{
-                total: dataTotal,
-                hideOnSinglePage: true,
-                showSizeChanger: false,
-              }}
+              pagination={false}
+              // pagination={{
+              //   total: dataTotal,
+              //   hideOnSinglePage: true,
+              //   showSizeChanger: false,
+              // }}
             />
         </Col>
 
