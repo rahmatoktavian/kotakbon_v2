@@ -118,7 +118,6 @@ const TrxInput = () => {
         })
 
     const newData = []
-    let rowTotal = data ? data[0].full_count : 0;
     data && data.map((val) => {
       let produkStokQty = val.produk_stok_qty ? val.produk_stok_qty : 0;
       let produkPenjualanQty = val.produk_penjualan_qty ? val.produk_penjualan_qty : 0;
@@ -156,6 +155,8 @@ const TrxInput = () => {
     })
     
     setDataProduk(newData)
+
+    let rowTotal = data.length > 0 ? data[0].full_count : 0;
     setDataTotal(rowTotal)
     
     setIsLoading(false)

@@ -79,7 +79,7 @@ const LapStokHarian = () => {
 
     setDataList(data)
 
-    let rowTotal = data ? data[0].full_count : 0;
+    let rowTotal = data.length > 0 ? data[0].full_count : 0;
     setDataTotal(rowTotal)
 
     let totalStokAwal = data ? data[0].total_produk_stok_qty : 0;
