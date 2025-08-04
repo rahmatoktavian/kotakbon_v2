@@ -493,7 +493,7 @@ const TrxInput = () => {
             </>
             }
             <List.Item>
-              <List.Item.Meta title='Note/Pemesan' />
+              <List.Item.Meta title='Catatan' />
               <Input
                 value={dataPesananNote}
                 onChange={(e) => setDataPesananNote(e.target.value)}
