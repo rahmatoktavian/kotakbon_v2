@@ -61,6 +61,7 @@ const TrxInput = () => {
   const [modalShow, setModalShow] = useState(false);
 
   const [searchFilter, setSearchFilter] = useState('');
+  const [kategoriFilter, setKategoriFilter] = useState('');
   const pageSize = 10;
   const [dataRange, setDataRange] = useState({ start:0, end:(pageSize-1) });
   const [dataTotal, setDataTotal] = useState(0);
@@ -94,7 +95,7 @@ const TrxInput = () => {
   useEffect(() => {
     getProdukList();
     // getKategoriList();
-  }, [searchFilter, dataPesananFinish, dataRange.start]);
+  }, [searchFilter, kategoriFilter, dataPesananFinish, dataRange.start]);
 
   async function getProdukList() {
     setIsLoading(true)
@@ -106,9 +107,12 @@ const TrxInput = () => {
     }
     
     let searchFilters = searchFilter != '' ? searchFilter : null;
-    const { data } = await supabase.rpc("produk_stok_harian_new", { 
+    let kategoriFilters = kategoriFilter != '' ? kategoriFilter : null;
+    const { data } = await supabase.rpc("produk_stok_harian_v2", { 
             date_filter:currDate,
             nama_filter:searchFilters, 
+            kategori_filter:kategoriFilters, 
+            supplier_filter:null,
             limit_filter: (dataRange.end - dataRange.start + 1),
             offset_filter: dataRange.start
         })
@@ -176,19 +180,19 @@ const TrxInput = () => {
     });
   };
 
-  // async function getKategoriList() {
-  //   const { data } = await supabase.from("kategori")
-  //                     .select('id,nama')
-  //                     .order('nama', { ascending:true })
+  async function getKategoriList() {
+    const { data } = await supabase.from("kategori")
+                      .select('id,nama')
+                      .order('nama', { ascending:true })
     
-  //   const listKategori = []
-  //   listKategori.push({ key:'', label:'Semua'})
-  //   data.map((val) => (
-  //     listKategori.push({ key:val.id, label:val.nama})
-  //   ))
+    const listKategori = []
+    listKategori.push({ key:'', label:'Semua'})
+    data.map((val) => (
+      listKategori.push({ key:val.id, label:val.nama})
+    ))
 
-  //   setDataKategori(listKategori)
-  // }
+    setDataKategori(listKategori)
+  }
   
   function onPesanInsert(produk) {
     //check already exist
