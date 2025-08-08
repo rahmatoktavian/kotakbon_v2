@@ -123,7 +123,7 @@ const TrxInput = () => {
       let produkPenjualanQty = val.produk_penjualan_qty ? val.produk_penjualan_qty : 0;
       let produkStok = produkStokQty - produkPenjualanQty
       
-      if(produkStok > 0) {
+      // if(produkStok > 0) {
         let disabledProduk = false
         let disabledLabel = 'Pilih'
         if(produkStok > 0) {
@@ -151,7 +151,7 @@ const TrxInput = () => {
           disabled:disabledProduk,
           disabledLabel: disabledLabel,
         })
-      }
+      // }
     })
     
     setDataProduk(newData)
