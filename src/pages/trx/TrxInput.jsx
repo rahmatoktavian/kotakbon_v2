@@ -102,7 +102,7 @@ const TrxInput = () => {
     if(searchFilter != '') {
       setDataRange({
         start:0,
-        end:25,
+        end:10,
       });
     }
     
@@ -403,12 +403,12 @@ const TrxInput = () => {
               style={{marginTop:10}} 
               loading={isLoading}
               onChange={onTableChange}
-              pagination={false}
-              // pagination={{
-              //   total: dataTotal,
-              //   hideOnSinglePage: true,
-              //   showSizeChanger: false,
-              // }}
+              // pagination={false}
+              pagination={{
+                total: dataTotal,
+                hideOnSinglePage: true,
+                showSizeChanger: false,
+              }}
             />
         </Col>
 
